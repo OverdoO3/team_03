@@ -1,0 +1,22 @@
+﻿  DirectXTexUtil.cpp
+  BC.cpp
+  BC4BC5.cpp
+  BC6HBC7.cpp
+  BCDirectCompute.cpp
+  DirectXTexCompress.cpp
+  DirectXTexCompressGPU.cpp
+  DirectXTexConvert.cpp
+  DirectXTexD3D11.cpp
+  DirectXTexDDS.cpp
+  DirectXTexFlipRotate.cpp
+  DirectXTexHDR.cpp
+  DirectXTexImage.cpp
+  DirectXTexMipMaps.cpp
+  DirectXTexMisc.cpp
+  DirectXTexNormalMaps.cpp
+  DirectXTexPMAlpha.cpp
+  DirectXTexResize.cpp
+  DirectXTexTGA.cpp
+  DirectXTexWIC.cpp
+  コードを生成中...
+Bin\Desktop_2022\ARM\Debug\BC.obj : fatal error LNK1112: モジュールのコンピューターの種類 'x64' は対象コンピューターの種類 'ARM' と競合しています。
