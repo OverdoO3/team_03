@@ -22,6 +22,7 @@ void Player::Initialize()
 	trailEffect->SetPosition(trailHandle, position);
 	trailHandle = trailEffect->Play({ 0,5.0f,0 }, 0.5f);
 	int sakai;
+	int sakai2;
 }
 
 void Player::Finalize()
