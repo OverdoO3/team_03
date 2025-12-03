@@ -21,8 +21,6 @@ void Player::Initialize()
 	scale.x = scale.y = scale.z = 0.01f;
 	trailEffect->SetPosition(trailHandle, position);
 	trailHandle = trailEffect->Play({ 0,5.0f,0 }, 0.5f);
-	int sakai;
-	int sakai2;
 }
 
 void Player::Finalize()
