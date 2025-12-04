@@ -74,6 +74,8 @@ private:
 	bool								animationPlaying = false;
 	float								animationBlendSecondsLength = 0.2f;
 
+	float a;
+
 	enum class State
 	{
 		Idle,

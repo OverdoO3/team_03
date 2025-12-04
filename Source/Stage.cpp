@@ -4,8 +4,7 @@
 Stage::Stage()
 {
 	//ステージのモデルを読み込む
-	model = std::make_unique<Model>("Data/Model/Stage/ExampleStage.mdl");
-
+	model = std::make_unique<Model>("Data/Model/Stage/demostage.mdl");
 	DirectX::XMStoreFloat4x4(&transform, DirectX::XMMatrixIdentity());
 }
 
