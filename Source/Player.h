@@ -26,7 +26,7 @@ public:
 
 	void DrawDebugGUI();
 
-	void InputMove(float elapsedTime);
+	bool InputMove(float elapsedTime);
 
 	void Update(float elapsedTime);
 
@@ -41,6 +41,11 @@ public:
 	void InputJump();
 
 	void setStage(Stage* s) { stage = s; }
+
+	void PlayAnimation(int index, bool loop);
+	void PlayAnimation(const char* name, bool loop);
+
+	void UpdateAnimation(float elapsedTime);
 protected:
 	void OnLanding() override;
 private:
@@ -62,4 +67,19 @@ private:
 
 	Stage* stage;
 	bool wasPressed = false;
+
+	int									animationIndex = -1;
+	float								animationSeconds = 0.0f;
+	bool								animationLoop = false;
+	bool								animationPlaying = false;
+	float								animationBlendSecondsLength = 0.2f;
+
+	enum class State
+	{
+		Idle,
+		Run,
+		Jump,
+		Attack,
+	};
+	State								state = State::Idle;
 };

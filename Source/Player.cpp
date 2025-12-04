@@ -14,7 +14,7 @@
 
 void Player::Initialize()
 {
-	model = std::make_unique<Model>("Data/Model/Mr.Incredible/Mr.Incredible.mdl");
+	model = std::make_unique<Model>("Data/Model/Jammo/Jammo.mdl");
 	hitEffect = std::make_unique<Effect>("Data/Effect/Hit.efk");
 	trailEffect= std::make_unique<Effect>("Data/Effect/trail_demo.efk");
 	hitSE.reset(Audio::Instance().LoadAudioSource("Data/Sound/Hit.wav"));
@@ -33,7 +33,7 @@ void Player::Update(float elapsedTime)
 {
 	InputJump();
 
-	InputProjectile();
+	
 
 	UpdateVelocity(elapsedTime);
 
@@ -41,17 +41,57 @@ void Player::Update(float elapsedTime)
 
 	CollisionPlyerVsEnemies();
 
-	InputMove(elapsedTime);
-
-	UpdateTransform();
-
-	model->UpdateTransform();
+	//InputMove(elapsedTime);
 
 	CollisionWeponVsEnemies();
 
 	trailEffect->SetPosition(trailHandle, position);
 
 	col->Update(elapsedTime);
+
+	switch (state)
+	{
+	case State::Idle:
+	{
+		if (InputMove(elapsedTime))
+		{
+			state = State::Run;
+			PlayAnimation("Running", true);
+		}
+
+		InputProjectile();
+		break;
+	}
+
+	case State::Run:
+	{
+		if (!InputMove(elapsedTime))
+		{
+			state = State::Idle;
+			PlayAnimation("Idle", true);
+		}
+
+		InputProjectile();
+		break;
+	}
+
+	case State::Attack:
+	{
+		if (!animationPlaying)
+		{
+			state = State::Idle;
+			PlayAnimation("Idle", true);
+			break;
+		}
+	}
+	}
+
+	// トランスフォーム更
+
+	UpdateTransform();
+
+	UpdateAnimation(elapsedTime);
+
 }
 
 void Player::Render(const RenderContext& rc, ModelRenderer* renderer)
@@ -143,6 +183,9 @@ void Player::InputProjectile()
 		col->SetPosition({ pos.x + dir.x ,pos.y + dir.y ,pos.z + dir.z });
 		col->SetIsAttack(true);
 		col->SetTimer(0.2f);
+
+		state = State::Attack;
+		PlayAnimation("Attack", false);
 	}
 
 	//玉撃ち置いとくだけ
@@ -177,6 +220,131 @@ void Player::InputJump()
 	}
 }
 
+// アニメーション再生
+void Player::PlayAnimation(int index, bool loop)
+{
+	animationPlaying = true;
+	animationLoop = loop;
+	animationIndex = index;
+	animationSeconds = 0.0f;
+}
+
+void Player::PlayAnimation(const char* name, bool loop)
+{
+	int index = 0;
+	const std::vector<ModelResource::Animation>& animations = model->GetResource()->GetAnimations();
+	for (const ModelResource::Animation& animation : animations)
+	{
+		if (animation.name == name)
+		{
+			PlayAnimation(index, loop);
+			return;
+		}
+		++index;
+	}
+}
+
+
+// アニメーション更新処理
+void Player::UpdateAnimation(float elapsedTime)
+{
+	if (animationPlaying)
+	{
+		//アニメーション切り替え時のブレンド率を計算
+		float blendRate = 1.0f;
+		if (animationSeconds < animationBlendSecondsLength)
+		{
+			blendRate = (animationSeconds / animationBlendSecondsLength);
+		}
+
+		std::vector<Model::Node>& nodes = model->GetNodes();
+
+		//アニメーションを取得
+		const std::vector<ModelResource::Animation>& animations = model->GetResource()->GetAnimations();
+		const ModelResource::Animation& animation = animations.at(animationIndex);
+
+		animationSeconds += elapsedTime;
+
+		if (animationSeconds >= animation.secondsLength)
+		{
+			if (animationLoop)
+			{
+				animationSeconds = 0;
+			}
+			else
+			{
+				animationPlaying = false;
+			}
+		}
+
+		const std::vector<ModelResource::Keyframe>& keyframes = animation.keyframes;
+		int keyCount = static_cast<int>(keyframes.size());
+
+		for (int keyIndex = 0;keyIndex < keyCount - 1; ++keyIndex)
+		{
+			//現在の時間がどのキーフレームかを判定する
+			const ModelResource::Keyframe& keyframe0 = keyframes.at(keyIndex);
+			const ModelResource::Keyframe& keyframe1 = keyframes.at(keyIndex + 1);
+			if (animationSeconds >= keyframe0.seconds && animationSeconds < keyframe1.seconds)
+			{
+				//再生時間とキーフレームの時間から補完率を算出
+				float rate = ((animationSeconds - keyframe0.seconds) / (keyframe1.seconds - keyframe0.seconds));
+
+				//すべてのノードの姿勢を計算する
+				int nodeCount = static_cast<int>(nodes.size());
+				for (int nodeIndex = 0; nodeIndex < nodeCount;++nodeIndex)
+				{
+					const ModelResource::NodeKeyData& key0 = keyframe0.nodeKeys.at(nodeIndex);
+					const ModelResource::NodeKeyData& key1 = keyframe1.nodeKeys.at(nodeIndex);
+
+					//ノード取得
+					Model::Node& node = nodes[nodeIndex];
+
+					if (blendRate < 1.0f)
+					{
+						//現在と次の姿勢を補完
+						DirectX::XMVECTOR S0 = DirectX::XMLoadFloat3(&node.scale);
+						DirectX::XMVECTOR S1 = DirectX::XMLoadFloat3(&key1.scale);
+						DirectX::XMVECTOR R0 = DirectX::XMLoadFloat4(&node.rotate);
+						DirectX::XMVECTOR R1 = DirectX::XMLoadFloat4(&key1.rotate);
+						DirectX::XMVECTOR T0 = DirectX::XMLoadFloat3(&node.translate);
+						DirectX::XMVECTOR T1 = DirectX::XMLoadFloat3(&key1.translate);
+
+						DirectX::XMVECTOR S = DirectX::XMVectorLerp(S0, S1, blendRate);
+						DirectX::XMVECTOR R = DirectX::XMQuaternionSlerp(R0, R1, blendRate);
+						DirectX::XMVECTOR T = DirectX::XMVectorLerp(T0, T1, blendRate);
+
+						DirectX::XMStoreFloat3(&node.scale, S);
+						DirectX::XMStoreFloat4(&node.rotate, R);
+						DirectX::XMStoreFloat3(&node.translate, T);
+					}
+					else
+					{
+						//前のキーフレームと次のキーフレームの姿勢を補完
+						DirectX::XMVECTOR S0 = DirectX::XMLoadFloat3(&key0.scale);
+						DirectX::XMVECTOR S1 = DirectX::XMLoadFloat3(&key1.scale);
+						DirectX::XMVECTOR R0 = DirectX::XMLoadFloat4(&key0.rotate);
+						DirectX::XMVECTOR R1 = DirectX::XMLoadFloat4(&key1.rotate);
+						DirectX::XMVECTOR T0 = DirectX::XMLoadFloat3(&key0.translate);
+						DirectX::XMVECTOR T1 = DirectX::XMLoadFloat3(&key1.translate);
+
+						DirectX::XMVECTOR S = DirectX::XMVectorLerp(S0, S1, rate);
+						DirectX::XMVECTOR R = DirectX::XMQuaternionSlerp(R0, R1, rate);
+						DirectX::XMVECTOR T = DirectX::XMVectorLerp(T0, T1, rate);
+
+						DirectX::XMStoreFloat3(&node.scale, S);
+						DirectX::XMStoreFloat4(&node.rotate, R);
+						DirectX::XMStoreFloat3(&node.translate, T);
+					}
+				}
+			}
+		}
+	}
+	//行列更新
+	model->UpdateTransform();
+}
+
+
 void Player::OnLanding()
 {
 	jumpCount = 0;
@@ -208,13 +376,20 @@ void Player::DrawDebugGUI()
 		ImGui::End();
 	}
 }
-void Player::InputMove(float elapsedTime)
+bool Player::InputMove(float elapsedTime)
 {
 	DirectX::XMFLOAT3 moveVec = GetMoveVec();
 
 	Move(elapsedTime, moveVec.x, moveVec.z, moveSpeed);
 
 	Turn(elapsedTime, moveVec.x, moveVec.z, turnSpeed);
+
+	if (moveVec.x == 0.0f && moveVec.z == 0.0f&&moveVec.y == 0.0f)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 DirectX::XMFLOAT3 Player::GetMoveVec() const
