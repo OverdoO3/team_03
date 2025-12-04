@@ -46,7 +46,6 @@ void SceneGame::Finalize()
 {
 	Player::Instance().Finalize();
 	EnemyManager& enemymanager = EnemyManager::Instance();
-	enemymanager.Clear();
 }
 
 // XVˆ—

@@ -38,7 +38,6 @@ private:
 		Attack
 	};
 
-
 	State state = State::Wander;
 	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
 	DirectX::XMFLOAT3 territoryOrigine = { 0,0,0 };

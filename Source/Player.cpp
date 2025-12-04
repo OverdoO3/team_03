@@ -21,6 +21,8 @@ void Player::Initialize()
 	scale.x = scale.y = scale.z = 0.01f;
 	trailEffect->SetPosition(trailHandle, position);
 	trailHandle = trailEffect->Play({ 0,5.0f,0 }, 0.5f);
+
+	col = std::make_unique<OnCollisionWepon>();
 }
 
 void Player::Finalize()
@@ -45,9 +47,11 @@ void Player::Update(float elapsedTime)
 
 	model->UpdateTransform();
 
-	CollisionProjectilesVsEnemies();
+	CollisionWeponVsEnemies();
 
 	trailEffect->SetPosition(trailHandle, position);
+
+	col->Update(elapsedTime);
 }
 
 void Player::Render(const RenderContext& rc, ModelRenderer* renderer)
@@ -63,6 +67,8 @@ void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* render
 	Character::RenderDebugPrimitive(rc, renderer);
 	//弾丸デバッグプリミティブ描画
 	projectileManager.RenderDebugPrimitive(rc, renderer);
+
+	col->RenderDebugPrimitive(rc, renderer);
 }
 
 void Player::InputProjectile()
@@ -70,40 +76,73 @@ void Player::InputProjectile()
 	//発射
 	bool isPressed = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
 
-	if (GetAsyncKeyState(VK_LBUTTON))
-	{
-		DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(),0);
-		DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(),1.0f);
-		DirectX::XMFLOAT3 hitPosition;
-		DirectX::XMFLOAT3 hitNormal;
-		Hit::RayCast(curPosS, curPosE, stage->getTransform(), stage->getModel(), hitPosition, hitNormal);
+	//左クリック押している間向きをカーソルの方向にするやーつ
+	
+	//if (GetAsyncKeyState(VK_LBUTTON))
+	//{
+	//	DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(),0);
+	//	DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(),1.0f);
+	//	DirectX::XMFLOAT3 hitPosition;
+	//	DirectX::XMFLOAT3 hitNormal;
+	//	Hit::RayCast(curPosS, curPosE, stage->getTransform(), stage->getModel(), hitPosition, hitNormal);
 
-		DirectX::XMFLOAT3 vec = { position.x - hitPosition.x,position.y - hitPosition.y,position.z - hitPosition.z };
-		// XZ 平面に投影
-		float dx = vec.x;
-		float dz = vec.z;
+	//	DirectX::XMFLOAT3 vec = { position.x - hitPosition.x,position.y - hitPosition.y,position.z - hitPosition.z };
+	//	// XZ 平面に投影
+	//	float dx = vec.x;
+	//	float dz = vec.z;
 
-		// Y軸まわりの回転角
-		float angles = atan2f(-dx, -dz); // ※向きによって順番調整
+	//	// Y軸まわりの回転角
+	//	float angles = atan2f(-dx, -dz); // ※向きによって順番調整
 
-		angle.y = angles;
-		UpdateTransform();
-	}
+	//	angle.y = angles;
+	//	UpdateTransform();
+	//}
 
+	//if (GetAsyncKeyState(VK_LBUTTON))
 	if (!isPressed && wasPressed)
 	{
+		Enemy* nearestEnemy = nullptr;
+		float nearestDist = FLT_MAX;
+		for (const auto& enemy : EnemyManager::Instance().GetEnemys())
+		{
+			DirectX::XMFLOAT3 p = enemy->GetPosition();
+			float dx = p.x - position.x;
+			float dy = p.y - position.y;
+			float dz = p.z - position.z;
+			float currentDist = sqrtf(dx * dx + dy * dy + dz * dz);
+
+			// もっと近いものが見つかったら更新
+			if (currentDist < nearestDist) {
+				nearestDist = currentDist;
+				nearestEnemy = enemy.get();
+			}
+		}
+		if (nearestEnemy != nullptr)
+		{
+			DirectX::XMFLOAT3 n = nearestEnemy->GetPosition();
+			DirectX::XMFLOAT3 vec = { position.x - n.x,position.y - n.y,position.z - n.z };
+
+			// XZ 平面に投影
+			float dx = vec.x;
+			float dz = vec.z;
+
+			// Y軸まわりの回転角
+			angle.y = atan2f(-dx, -dz); // ※向きによって順番調整
+		}
+
 		DirectX::XMFLOAT3 dir;
-		dir.x = sinf(angle.y);
+		dir.x = sinf(angle.y) * 2;
 		dir.y = 0.0f;
-		dir.z = cosf(angle.y);
+		dir.z = cosf(angle.y) * 2;
 		//発射位置（プレイヤーの腰当たり）
 		DirectX::XMFLOAT3 pos;
 		pos.x = position.x;
 		pos.y = position.y + 0.8f;
 		pos.z = position.z;
 		//発射
-		ProjectileStraight * projectile = new ProjectileStraight(&projectileManager);
-		projectile->Launch(dir, pos);
+		col->SetPosition({ pos.x + dir.x ,pos.y + dir.y ,pos.z + dir.z });
+		col->SetIsAttack(true);
+		col->SetTimer(0.2f);
 	}
 
 	//玉撃ち置いとくだけ
@@ -224,48 +263,31 @@ DirectX::XMFLOAT3 Player::GetMoveVec() const
 	return vec;
 }
 
-void Player::CollisionProjectilesVsEnemies()
+void Player::CollisionWeponVsEnemies()
 {
 	EnemyManager& enemyManager = EnemyManager::Instance();
 
-	//すべての弾とすべての敵を総当たり
-	int projectileCount = projectileManager.GetProjectileCount();
 	int enemyCount = enemyManager.GetEnemyCount();
-	for (int i = 0; i < projectileCount; ++i)
+	for (int j = 0; j < enemyCount; ++j)
 	{
-		Projectile* projectile = projectileManager.GetProjectile(i);
-		for (int j = 0; j < enemyCount; ++j)
+		Enemy* enemy = enemyManager.GetEnemy(j);
+		//衝突処理
+		DirectX::XMFLOAT3 outPosition;
+		if (Collision::IntersectSphereVsCylinder(
+			col->GetPosition(),
+			col->GetRadius(),
+			enemy->GetPosition(),
+			enemy->GetRadius(),
+			enemy->GetHeight(),
+			outPosition)&&col->GetIsAttack())
 		{
-			Enemy* enemy = enemyManager.GetEnemy(j);
-
-			//衝突処理
-			DirectX::XMFLOAT3 outPosition;
-			if (Collision::IntersectSphereVsCylinder(
-				projectile->GetPosition(),
-				projectile->GetRadius(),
-				enemy->GetPosition(),
-				enemy->GetRadius(),
-				enemy->GetHeight(),
-				outPosition))
+			if (enemy->ApplyDamage(1, 0.5f))
 			{
-				if (enemy->ApplyDamage(1, 0.5f))
-				{
-					//吹き飛ばし
-					DirectX::XMFLOAT3 impluse;
-					impluse.x = 10*projectile->GetDirection().x;
-					impluse.y = 10.0f;
-				    impluse.z = 10*projectile->GetDirection().z;
-					enemy->AddImpulse(impluse);
+				DirectX::XMFLOAT3 e = enemy->GetPosition();
+				e.y += 1.0f;
+				hitEffect->Play(e, 2.0f);
 
-					DirectX::XMFLOAT3 e = enemy->GetPosition();
-					e.y += 1.0f;
-					hitEffect->Play(e,2.0f);
-
-					hitSE->Play(false);
-
-					//破棄
-					projectile->Destroy();
-				}
+				hitSE->Play(false);
 			}
 		}
 	}

@@ -37,6 +37,8 @@ public:
 	float GetHeight() { return height; }
 	//ƒ_ƒ[ƒW‚ğ—^‚¦‚é
 	bool ApplyDamage(int damage, float invincibleTime);
+
+	int GetHP() { return health; }
 protected:
 	DirectX::XMFLOAT3   position = { 0,0,0 };
 	DirectX::XMFLOAT3   angle = { 0,0,0 };

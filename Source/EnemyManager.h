@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 #include "Enemy.h"
+#include <memory>
 
 class EnemyManager
 {
@@ -23,19 +24,18 @@ public:
 
 	void Register(Enemy* enemy);
 
-	void Clear();
-
 	void Remove(Enemy* enemy);
 
 	void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer);
 
 	int GetEnemyCount() const { return static_cast<int>(enemies.size());}
 
-	Enemy* GetEnemy(int index) { return enemies.at(index); }
+	Enemy* GetEnemy(int index) { return enemies.at(index).get(); }
+
+	const std::vector<std::unique_ptr<Enemy>>& GetEnemys() { return enemies; }
 
 	void CollisionEnemyVsEnemies();
 private:
-	std::vector<Enemy*> enemies;
+	std::vector<std::unique_ptr<Enemy>> enemies;
 
-	std::set<Enemy*> removes;
 };

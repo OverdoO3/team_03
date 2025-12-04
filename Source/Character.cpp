@@ -33,13 +33,6 @@ bool Character::ApplyDamage(int damage,float invincibleTime)
 	this->invincibleTime = invincibleTime;
 
 	health -= damage;
-
-	//Ž€‚ñ‚¾
-	if (health <= 0)
-	{
-		OnDead();
-	}
-	else
 	{
 		OnDamage();
 	}

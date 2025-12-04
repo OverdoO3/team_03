@@ -54,8 +54,7 @@ void EnemySlime::Render(const RenderContext& rc, ModelRenderer* renderer)
 
 void EnemySlime::OnDead()
 {
-	//©g‚ğ”jŠü
-	Destroy();
+	
 }
 
 void EnemySlime::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)

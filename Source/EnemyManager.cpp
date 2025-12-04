@@ -3,19 +3,26 @@
 
 void EnemyManager::Update(float elapsedTime)
 {
-	for (Enemy* enemy : enemies)
+
+	std::vector<Enemy*> removes;
+
+	for (const auto& enemy : enemies)
 	{
 		enemy->Update(elapsedTime);
 	}
 
-	for (Enemy* enemy : removes)
+	for (const auto& enemy : enemies)
 	{
-		std::vector<Enemy*>::iterator it = std::find(enemies.begin(), enemies.end(), enemy);
-		if(it != enemies.end())
+		enemy->Update(elapsedTime);
+		if (enemy->GetHP() <= 0)
 		{
-			enemies.erase(it);
+			removes.push_back(enemy.get());
 		}
-		delete enemy;
+	}
+
+	for (const auto& enemy : removes)
+	{
+		Remove(enemy);
 	}
 	removes.clear();
 	CollisionEnemyVsEnemies();
@@ -23,7 +30,7 @@ void EnemyManager::Update(float elapsedTime)
 
 void EnemyManager::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
-	for (Enemy* enemy : enemies)
+	for (const auto& enemy : enemies)
 	{
 		enemy->Render(rc, renderer);
 	}
@@ -34,22 +41,28 @@ void EnemyManager::Register(Enemy* enemy)
 	enemies.emplace_back(enemy);
 }
 
-void EnemyManager::Clear()
-{
-	for(Enemy * enemy : enemies)
-	{
-		delete enemy;
-	}
-}
-
 void EnemyManager::Remove(Enemy* enemy)
 {
-	removes.insert(enemy);
+	if (!enemy) return;
+	bool removed = false;
+
+	for (auto it = enemies.begin();it != enemies.end();)
+	{
+		if (it->get() == enemy)
+		{
+			it = enemies.erase(it);
+			removed = true;
+		}
+		else
+		{
+			++it;
+		}
+	}
 }
 
 void EnemyManager::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
 {
-	for (Enemy* enemy : enemies)
+	for (const auto& enemy : enemies)
 	{
 		enemy->RenderDebugPrimitive(rc, renderer);
 	}
