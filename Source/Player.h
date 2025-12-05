@@ -36,7 +36,8 @@ public:
 
 	void CollisionWeponVsEnemies();
 
-	void InputProjectile();
+	void InputAttack();
+	void InputRush(float elapsedTime);
 
 	void InputJump();
 
@@ -61,12 +62,14 @@ private:
 	std::unique_ptr<Effect> hitEffect = nullptr;
 	std::unique_ptr<Effect> trailEffect = nullptr;
 	Effekseer::Handle trailHandle = -1;
+	Effekseer::Handle hitHandle = -1;
 	std::unique_ptr<AudioSource> hitSE = nullptr;
 
 	std::unique_ptr<OnCollisionWepon> col = nullptr;
 
 	Stage* stage;
 	bool wasPressed = false;
+	bool wasPressedR = false;
 
 	int									animationIndex = -1;
 	float								animationSeconds = 0.0f;
@@ -74,13 +77,18 @@ private:
 	bool								animationPlaying = false;
 	float								animationBlendSecondsLength = 0.2f;
 
-	float a;
+	float rushSpeed = 12.0f;
+	DirectX::XMFLOAT3 rushVec = { 0,0,0 };
+	float rushTimer = 0.0f;
+	float rushTime = 0.5f;
+	float rushDist = 0.0f;
+	bool isChargeRush;
 
 	enum class State
 	{
 		Idle,
 		Run,
-		Jump,
+		Rush,
 		Attack,
 	};
 	State								state = State::Idle;

@@ -15,7 +15,7 @@
 void Player::Initialize()
 {
 	model = std::make_unique<Model>("Data/Model/Jammo/Jammo.mdl");
-	hitEffect = std::make_unique<Effect>("Data/Effect/Hit.efk");
+	hitEffect = std::make_unique<Effect>("Data/Effect/hit.efk");
 	trailEffect= std::make_unique<Effect>("Data/Effect/trail_demo.efk");
 	hitSE.reset(Audio::Instance().LoadAudioSource("Data/Sound/Hit.wav"));
 	scale.x = scale.y = scale.z = 0.01f;
@@ -23,6 +23,9 @@ void Player::Initialize()
 	trailHandle = trailEffect->Play({ 0,5.0f,0 }, 0.5f);
 
 	col = std::make_unique<OnCollisionWepon>();
+
+	state = State::Idle;
+	PlayAnimation("Idle", true);
 }
 
 void Player::Finalize()
@@ -32,8 +35,6 @@ void Player::Finalize()
 void Player::Update(float elapsedTime)
 {
 	InputJump();
-
-	
 
 	UpdateVelocity(elapsedTime);
 
@@ -53,13 +54,16 @@ void Player::Update(float elapsedTime)
 	{
 	case State::Idle:
 	{
-		if (InputMove(elapsedTime))
+		if (!isChargeRush)
 		{
-			state = State::Run;
-			PlayAnimation("Running", true);
+			if (InputMove(elapsedTime))
+			{
+				state = State::Run;
+				PlayAnimation("Running", true);
+			}
 		}
-
-		InputProjectile();
+		InputRush(elapsedTime);
+		InputAttack();
 		break;
 	}
 
@@ -70,8 +74,9 @@ void Player::Update(float elapsedTime)
 			state = State::Idle;
 			PlayAnimation("Idle", true);
 		}
-
-		InputProjectile();
+		InputRush(elapsedTime);
+		InputAttack();
+		moveSpeed = 5.0f;
 		break;
 	}
 
@@ -83,8 +88,27 @@ void Player::Update(float elapsedTime)
 			PlayAnimation("Idle", true);
 			break;
 		}
+		InputAttack();
+		InputRush(elapsedTime);
+		InputMove(elapsedTime);
+		moveSpeed = 2.0f;
+		break;
 	}
+	case State::Rush:
+	{
+		position.x += rushVec.x * rushSpeed * rushDist * elapsedTime;
+		position.z += rushVec.z * rushSpeed * rushDist * elapsedTime;
+		rushTimer -= elapsedTime;
+
+		if (rushTimer <= 0.0f)
+		{
+			state = State::Idle;
+			PlayAnimation("Idle", true);
+			rushDist = 0.0f;
+		}
+		break;
 	}
+}
 
 	// トランスフォーム更
 
@@ -111,32 +135,10 @@ void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* render
 	col->RenderDebugPrimitive(rc, renderer);
 }
 
-void Player::InputProjectile()
+void Player::InputAttack()
 {
 	//発射
 	bool isPressed = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
-
-	//左クリック押している間向きをカーソルの方向にするやーつ
-	
-	//if (GetAsyncKeyState(VK_LBUTTON))
-	//{
-	//	DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(),0);
-	//	DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(),1.0f);
-	//	DirectX::XMFLOAT3 hitPosition;
-	//	DirectX::XMFLOAT3 hitNormal;
-	//	Hit::RayCast(curPosS, curPosE, stage->getTransform(), stage->getModel(), hitPosition, hitNormal);
-
-	//	DirectX::XMFLOAT3 vec = { position.x - hitPosition.x,position.y - hitPosition.y,position.z - hitPosition.z };
-	//	// XZ 平面に投影
-	//	float dx = vec.x;
-	//	float dz = vec.z;
-
-	//	// Y軸まわりの回転角
-	//	float angles = atan2f(-dx, -dz); // ※向きによって順番調整
-
-	//	angle.y = angles;
-	//	UpdateTransform();
-	//}
 
 	//if (GetAsyncKeyState(VK_LBUTTON))
 	if (!isPressed && wasPressed)
@@ -205,6 +207,65 @@ void Player::InputProjectile()
 	//	projectile->Launch(dir, pos);
 	//}
 	wasPressed = isPressed;
+
+}
+
+void Player::InputRush(float elapsedTime)
+{
+	bool isPressedR = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+
+	//右クリック押している間向きをカーソルの方向にするやーつ
+
+	DirectX::XMFLOAT3 vec{};
+	if (isPressedR)
+	{
+		DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(), 0);
+		DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(), 1.0f);
+
+		DirectX::XMFLOAT3 hitPosition;
+		DirectX::XMFLOAT3 hitNormal;
+
+		if (Hit::RayCast(curPosS, curPosE,
+			stage->getTransform(),
+			stage->getModel(),
+			hitPosition, hitNormal))
+		{
+			vec = {
+				hitPosition.x - position.x,
+				0.0f,
+				hitPosition.z - position.z
+			};
+
+			// 正規化
+			float len = sqrtf(vec.x * vec.x + vec.z * vec.z);
+			if (len != 0.0f)
+			{
+				vec.x /= len;
+				vec.z /= len;
+			}
+
+			rushVec = vec;
+
+			// 回転
+			float angles = atan2f(vec.x, vec.z);
+			angle.y = angles;
+		}
+		moveSpeed = 2.0f;
+		rushDist += elapsedTime;
+
+		isChargeRush = true;
+	}
+
+	// 離した瞬間：突進
+	if (!isPressedR && wasPressedR)
+	{
+		rushTimer = rushTime;
+		state = State::Rush;
+		moveSpeed = 5.0f;
+		isChargeRush = false;
+		//PlayAnimation("Attack", false);
+	}
+	wasPressedR = isPressedR;
 }
 
 void Player::InputJump()
@@ -460,7 +521,8 @@ void Player::CollisionWeponVsEnemies()
 			{
 				DirectX::XMFLOAT3 e = enemy->GetPosition();
 				e.y += 1.0f;
-				hitEffect->Play(e, 2.0f);
+				hitEffect->Stop(hitHandle);
+				hitHandle = hitEffect->Play(e, 0.4f);
 
 				hitSE->Play(false);
 			}
