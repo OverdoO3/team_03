@@ -8,6 +8,8 @@
 class EnemySlime : public Enemy
 {
 public:
+	Effect* hitEffect;
+public:
 	EnemySlime();
 	~EnemySlime() override;
 
@@ -18,6 +20,8 @@ public:
 	void OnDead() override;
 
 	void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer) override;
+
+	void PlayHitEffect();
 
 	void SetTerritory(const DirectX::XMFLOAT3& origin, float range);
 private:
@@ -30,6 +34,8 @@ private:
 	bool SearchPlayer();
 	void SetAttackState();
 	void UpdateAttackState(float elapsedTime);
+
+	void DrawDebugGUI();
 
 	enum class State
 	{

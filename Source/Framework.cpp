@@ -11,6 +11,7 @@
 #include "SceneManager.h"
 #include "EffectManager.h"
 #include "System/Audio.h"
+#include "System/ResourceManager.h"
 
 // ‚’¼“¯ŠúŠÔŠuİ’è
 static const int syncInterval = 1;

@@ -2,14 +2,18 @@
 #include "MathUtils.h"
 #include "Player.h"
 #include "ProjectileStraight.h"
+#include <imgui.h>
 
 EnemySlime::EnemySlime()
 {
+	hitEffect = new Effect("Data/Effect/hit.efk");
 	model = std::make_unique<Model>("Data/Model/Slime/Slime.mdl");
 	
 	scale.x = scale.y = scale.z = 0.01f;
 	radius = 0.5f;
 	height = 1.0f;
+
+	//hitEffect = std::make_unique<Effect>("Data/Effect/hit.efk");
 
 	//œpœjƒXƒe[ƒg‚Ö‘JˆÚ
 	SetWanderState();
@@ -17,6 +21,7 @@ EnemySlime::EnemySlime()
 
 EnemySlime::~EnemySlime()
 {
+	delete hitEffect;
 }
 
 void EnemySlime::Update(float elapsedTime)
@@ -50,6 +55,8 @@ void EnemySlime::Render(const RenderContext& rc, ModelRenderer* renderer)
 
 	//’eŠÛ•`‰æ
 	projectileManager.Render(rc, renderer);
+
+	DrawDebugGUI();
 }
 
 void EnemySlime::OnDead()
@@ -212,6 +219,27 @@ void EnemySlime::UpdateAttackState(float elapsedTime)
 	{
 		targetPosition = { FLT_MAX, FLT_MAX, FLT_MAX };
 		SetIdleState();
+	}
+}
+
+void EnemySlime::PlayHitEffect()
+{
+	DirectX::XMFLOAT3 pos = position;
+	pos.y += 1.3f;
+	EnemySlime::hitEffect->Play(pos, 0.5f);
+}
+
+void EnemySlime::DrawDebugGUI()
+{
+	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
+	{
+
+		ImGui::InputInt("EnemyNow", &health);
+		ImGui::End();
 	}
 }
 

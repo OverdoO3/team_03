@@ -3,10 +3,9 @@
 #include "System/ModelRenderer.h"
 #include "ProjectileManager.h"
 #include "Character.h"
-#include "Effect.h"
 #include "System/AudioSource.h"
 #include "Stage.h"
-#include "OncollisionWepon.h"
+#include "Wepon.h"
 
 //ÉvÉåÉCÉÑÅ[
 class Player : public Character
@@ -59,13 +58,13 @@ private:
 	int jumpCount = 0;
 	int jumpLimit = 2;
 	ProjectileManager projectileManager;
-	std::unique_ptr<Effect> hitEffect = nullptr;
+
 	std::unique_ptr<Effect> trailEffect = nullptr;
 	Effekseer::Handle trailHandle = -1;
-	Effekseer::Handle hitHandle = -1;
+
 	std::unique_ptr<AudioSource> hitSE = nullptr;
 
-	std::unique_ptr<OnCollisionWepon> col = nullptr;
+	std::unique_ptr<Wepon> col = nullptr;
 
 	Stage* stage;
 	bool wasPressed = false;
@@ -77,10 +76,10 @@ private:
 	bool								animationPlaying = false;
 	float								animationBlendSecondsLength = 0.2f;
 
-	float rushSpeed = 12.0f;
+	float rushSpeed = 14.0f;
 	DirectX::XMFLOAT3 rushVec = { 0,0,0 };
 	float rushTimer = 0.0f;
-	float rushTime = 0.5f;
+	float rushTime = 0.2f;
 	float rushDist = 0.0f;
 	bool isChargeRush;
 

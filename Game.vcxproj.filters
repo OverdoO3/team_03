@@ -67,6 +67,9 @@
     <Filter Include="Source\Common\P&amp;C">
       <UniqueIdentifier>{4d52ad01-0ae0-4e04-98a0-748f907186f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Common\Resource">
+      <UniqueIdentifier>{346fadfc-51a5-4724-a292-27f10cff03a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\imgui-docking\imconfig.h">
@@ -255,10 +258,16 @@
     <ClInclude Include="Source\Screen.h">
       <Filter>Source\misc</Filter>
     </ClInclude>
-    <ClInclude Include="Source\OncollisionWepon.h">
+    <ClInclude Include="Source\Player.h">
       <Filter>Source\Chara</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Player.h">
+    <ClInclude Include="Source\Obj.h">
+      <Filter>Source\Stages</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\System\ResourceManager.h">
+      <Filter>Source\Common\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Wepon.h">
       <Filter>Source\Chara</Filter>
     </ClInclude>
   </ItemGroup>
@@ -413,7 +422,13 @@
     <ClCompile Include="Source\Menu.cpp">
       <Filter>Source\Common\Menu</Filter>
     </ClCompile>
-    <ClCompile Include="Source\OncollisionWepon.cpp">
+    <ClCompile Include="Source\Obj.cpp">
+      <Filter>Source\Stages</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\System\ResourceManager.cpp">
+      <Filter>Source\Common\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Wepon.cpp">
       <Filter>Source\Chara</Filter>
     </ClCompile>
   </ItemGroup>

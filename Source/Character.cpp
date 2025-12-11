@@ -32,6 +32,8 @@ bool Character::ApplyDamage(int damage,float invincibleTime)
 
 	this->invincibleTime = invincibleTime;
 
+	
+
 	health -= damage;
 	{
 		OnDamage();

@@ -8,7 +8,7 @@ class Enemy : public Character
 {
 public:
 	Enemy() {}
-	~Enemy() override{}
+	~Enemy() override {}
 
 	virtual void Update(float elapsedTime) = 0;
 
@@ -19,9 +19,12 @@ public:
 
 	virtual void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
 	{
-        // 共通のデバッグ描画（例：当たり判定の円柱）
-        renderer->RenderCylinder(rc, GetPosition(), GetRadius(), GetHeight(), DirectX::XMFLOAT4(0, 0, 0, 1));
-    }
+		// 共通のデバッグ描画（例：当たり判定の円柱）
+		renderer->RenderCylinder(rc, GetPosition(), GetRadius(), GetHeight(), DirectX::XMFLOAT4(0, 0, 0, 1));
+	}
 
+	virtual void PlayHitEffect() {}
+
+	bool wasHit = false;
 
 };

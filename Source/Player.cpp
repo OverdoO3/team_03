@@ -15,14 +15,13 @@
 void Player::Initialize()
 {
 	model = std::make_unique<Model>("Data/Model/Jammo/Jammo.mdl");
-	hitEffect = std::make_unique<Effect>("Data/Effect/hit.efk");
 	trailEffect= std::make_unique<Effect>("Data/Effect/trail_demo.efk");
 	hitSE.reset(Audio::Instance().LoadAudioSource("Data/Sound/Hit.wav"));
 	scale.x = scale.y = scale.z = 0.01f;
 	trailEffect->SetPosition(trailHandle, position);
 	trailHandle = trailEffect->Play({ 0,5.0f,0 }, 0.5f);
 
-	col = std::make_unique<OnCollisionWepon>();
+	col = std::make_unique<Wepon>();
 
 	state = State::Idle;
 	PlayAnimation("Idle", true);
@@ -90,7 +89,11 @@ void Player::Update(float elapsedTime)
 		}
 		InputAttack();
 		InputRush(elapsedTime);
-		InputMove(elapsedTime);
+		if (InputMove(elapsedTime))
+		{
+			state = State::Run;
+			PlayAnimation("Running", true);
+		}
 		moveSpeed = 2.0f;
 		break;
 	}
@@ -99,7 +102,7 @@ void Player::Update(float elapsedTime)
 		position.x += rushVec.x * rushSpeed * rushDist * elapsedTime;
 		position.z += rushVec.z * rushSpeed * rushDist * elapsedTime;
 		rushTimer -= elapsedTime;
-
+		col->SetPosition(position);
 		if (rushTimer <= 0.0f)
 		{
 			state = State::Idle;
@@ -181,13 +184,18 @@ void Player::InputAttack()
 		pos.x = position.x;
 		pos.y = position.y + 0.8f;
 		pos.z = position.z;
-		//”­ŽË
+
 		col->SetPosition({ pos.x + dir.x ,pos.y + dir.y ,pos.z + dir.z });
 		col->SetIsAttack(true);
 		col->SetTimer(0.2f);
 
 		state = State::Attack;
 		PlayAnimation("Attack", false);
+
+
+		DirectX::XMFLOAT3 a = angle;
+		a.x = DirectX::XM_PI / 2;
+		col->SetAngle(a);
 	}
 
 	//‹ÊŒ‚‚¿’u‚¢‚Æ‚­‚¾‚¯
@@ -226,7 +234,7 @@ void Player::InputRush(float elapsedTime)
 		DirectX::XMFLOAT3 hitNormal;
 
 		if (Hit::RayCast(curPosS, curPosE,
-			stage->getTransform(),
+			stage->GetTransform(),
 			stage->getModel(),
 			hitPosition, hitNormal))
 		{
@@ -259,10 +267,12 @@ void Player::InputRush(float elapsedTime)
 	// —£‚µ‚½uŠÔF“Ëi
 	if (!isPressedR && wasPressedR)
 	{
-		rushTimer = rushTime;
+		rushTimer = rushTime * rushDist;
 		state = State::Rush;
 		moveSpeed = 5.0f;
 		isChargeRush = false;
+		col->SetIsAttack(true);
+		col->SetTimer(rushTimer);
 		//PlayAnimation("Attack", false);
 	}
 	wasPressedR = isPressedR;
@@ -405,38 +415,11 @@ void Player::UpdateAnimation(float elapsedTime)
 	model->UpdateTransform();
 }
 
-
 void Player::OnLanding()
 {
 	jumpCount = 0;
 }
 
-void Player::DrawDebugGUI()
-{
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_Once);
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-	{
-		if(ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::InputFloat3("Positon", &position.x);
-
-			DirectX::XMFLOAT3 a;
-			a.x = DirectX::XMConvertToDegrees(angle.x);
-			a.y = DirectX::XMConvertToDegrees(angle.y);
-			a.z = DirectX::XMConvertToDegrees(angle.z);
-			ImGui::InputFloat3("Angle", &a.x);
-			angle.x = DirectX::XMConvertToRadians(a.x);
-			angle.y = DirectX::XMConvertToRadians(a.y);
-			angle.z = DirectX::XMConvertToRadians(a.z);
-
-			ImGui::InputFloat3("Scale", &scale.x);
-		}
-		ImGui::End();
-	}
-}
 bool Player::InputMove(float elapsedTime)
 {
 	DirectX::XMFLOAT3 moveVec = GetMoveVec();
@@ -503,30 +486,35 @@ void Player::CollisionWeponVsEnemies()
 {
 	EnemyManager& enemyManager = EnemyManager::Instance();
 
+	bool attacking = col->GetIsAttack();
+
 	int enemyCount = enemyManager.GetEnemyCount();
 	for (int j = 0; j < enemyCount; ++j)
 	{
 		Enemy* enemy = enemyManager.GetEnemy(j);
-		//Õ“Ëˆ—
-		DirectX::XMFLOAT3 outPosition;
-		if (Collision::IntersectSphereVsCylinder(
-			col->GetPosition(),
-			col->GetRadius(),
-			enemy->GetPosition(),
-			enemy->GetRadius(),
-			enemy->GetHeight(),
-			outPosition)&&col->GetIsAttack())
-		{
-			if (enemy->ApplyDamage(1, 0.5f))
-			{
-				DirectX::XMFLOAT3 e = enemy->GetPosition();
-				e.y += 1.0f;
-				hitEffect->Stop(hitHandle);
-				hitHandle = hitEffect->Play(e, 0.4f);
 
-				hitSE->Play(false);
-			}
+		DirectX::XMFLOAT3 outPosition;
+		bool hitNow = false;
+
+		if (attacking)
+		{
+			hitNow = Collision::IntersectSphereVsCylinder(
+				col->GetPosition(),
+				col->GetRadius(),
+				enemy->GetPosition(),
+				enemy->GetRadius(),
+				enemy->GetHeight(),
+				outPosition);
 		}
+
+		// ¥‰ƒqƒbƒg‚µ‚½uŠÔ‚Ì‚Ýˆ—
+		if (hitNow && !enemy->wasHit)
+		{
+			enemy->ApplyDamage(1, 0.0f);
+			enemy->PlayHitEffect();
+		}
+
+		enemy->wasHit = hitNow;
 	}
 }
 
@@ -558,5 +546,22 @@ void Player::CollisionPlyerVsEnemies()
 				enemy->SetPosition(outPosition);
 			}
 		}
+	}
+}
+
+
+void Player::DrawDebugGUI()
+{
+	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+	
+
+	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
+	{
+		bool a = col->GetIsAttack();
+		ImGui::Checkbox("now", &a);
+		ImGui::End();
 	}
 }

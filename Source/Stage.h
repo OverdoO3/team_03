@@ -3,9 +3,9 @@
 #include "System//ModelRenderer.h"
 #include "System/Sprite.h"
 #include <memory>
+#include "Obj.h"
 
-
-class Stage
+class Stage : public Obj
 {
 public:
 	Stage();
@@ -20,8 +20,6 @@ public:
 private:
 	std::unique_ptr<Model>model = nullptr;
 
-	DirectX::XMFLOAT4X4 transform;
 public:
-	DirectX::XMFLOAT4X4 getTransform() { return transform; }
 	Model* getModel() { return model.get(); }
 };

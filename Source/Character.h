@@ -5,6 +5,7 @@
 #include"System/Sprite.h"
 #include"System/Model.h"
 #include<memory>
+#include "Effect.h"
 
 class Character
 {

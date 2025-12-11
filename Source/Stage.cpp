@@ -5,7 +5,10 @@ Stage::Stage()
 {
 	//ステージのモデルを読み込む
 	model = std::make_unique<Model>("Data/Model/Stage/demostage.mdl");
-	DirectX::XMStoreFloat4x4(&transform, DirectX::XMMatrixIdentity());
+
+	scale = { 0.01f,0.01f,0.01f };
+	angle = { 0,30,0 };
+	UpdateTransfomEuler();
 }
 
 Stage::~Stage()
