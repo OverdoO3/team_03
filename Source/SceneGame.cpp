@@ -5,10 +5,15 @@
 #include "EnemySlime.h"
 #include "Player.h"
 #include "EffectManager.h"
+#include "nlohmann/json.hpp"
+#include "fstream"
+using json = nlohmann::json;
 // 初期化
 void SceneGame::Initialize()
 {
 	stage = std::make_unique<Stage>();
+	pathfinding = std::make_unique<Pathfinding>();
+	pathfinding->Initialize(stage.get());
 	Player::Instance().Initialize();
 	//player = new Player();
 
@@ -28,14 +33,29 @@ void SceneGame::Initialize()
 	);
 	cameraController = std::make_unique<CameraController>();
 
+	int index = 0;
+	std::ifstream file("map.json");
+	if (file)
+	{
+		json data = json::parse(file);
+		for (int i = 0;i < data["Width"];i++)
+		{
+			for (int j = 0;j < data["Height"];j++)
+			{
+				stage->IsWalkable(i, j);
+				maps[i][j] = data["cells"][index++].get<int>();
+			}
+		}
+	}
+
 	//エネミー初期化
 	EnemyManager& enemymanager = EnemyManager::Instance();
-	//enemymanager.Register(new EnemySlime);
-	for (int i = 0; i < 2;++i)
+	//for (int i = 0; i < 2;++i)
 	{
-		EnemySlime* slime = new EnemySlime();
-		slime->SetPosition(DirectX::XMFLOAT3(i * 2.0f, 0, 5));
-		slime->SetTerritory(slime->GetPosition(), 10.0f);
+		EnemySlime* slime = new EnemySlime(stage.get(), pathfinding.get());
+		slime->InitializeEnemy(stage.get(), pathfinding.get());
+		slime->SetPosition(DirectX::XMFLOAT3(1 * 2.0f, 0, 5));
+		slime->SetReady(true);
 		enemymanager.Register(slime);
 	}
 
@@ -57,10 +77,10 @@ void SceneGame::Update(float elapsedTime)
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
 	stage->Update(elapsedTime);
-	//player->Update(elapsedTime);
-	Player::Instance().Update(elapsedTime);
+	Player::Instance().Update(elapsedTime,maps);
 	EnemyManager& enemymanager = EnemyManager::Instance();
-	enemymanager.Update(elapsedTime);
+	//enemymanager.Update(elapsedTime,Player::Instance().GetPosition());
+	enemymanager.Update(elapsedTime,*stage->GetTower());
 	EffectManager::Instance().Update(elapsedTime);
 }
 
@@ -99,6 +119,8 @@ void SceneGame::Render()
 		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
 		//エネミーデバッグプリミティブ
 		EnemyManager::Instance().RenderDebugPrimitive(rc,shapeRenderer);
+
+		stage->DebugDrawGrid(rc, shapeRenderer,modelRenderer);
 	}
 
 	// 2Dスプライト描画
@@ -112,4 +134,13 @@ void SceneGame::DrawGUI()
 {
 	//player->DrawDebugGUI();
 	Player::Instance().DrawDebugGUI();
+	stage->DrawDebugGUI();
+	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 200), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+	/*if (ImGui::Begin("Enemy", nullptr, ImGuiWindowFlags_None))
+	{
+		ImGui::End();
+	}*/
 }

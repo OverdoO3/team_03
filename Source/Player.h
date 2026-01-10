@@ -25,9 +25,9 @@ public:
 
 	void DrawDebugGUI();
 
-	bool InputMove(float elapsedTime);
+	bool InputMove(float elapsedTime, const int(&maps)[38][38]);
 
-	void Update(float elapsedTime);
+	void Update(float elapsedTime, const int(&maps)[38][38]);
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer);
 
@@ -36,9 +36,7 @@ public:
 	void CollisionWeponVsEnemies();
 
 	void InputAttack();
-	void InputRush(float elapsedTime);
-
-	void InputJump();
+	void InputRush(float elapsedTime, const int(&maps)[38][38]);
 
 	void setStage(Stage* s) { stage = s; }
 
@@ -46,25 +44,27 @@ public:
 	void PlayAnimation(const char* name, bool loop);
 
 	void UpdateAnimation(float elapsedTime);
-protected:
-	void OnLanding() override;
+
+	void MoveWithCollision(float elapsedTime,float dx,float dz,const int(&maps)[38][38],bool isRush = false);
+
+	void ChangeWepon();
 private:
 	//スティック入力値から移動ベクトルを取得
 	DirectX::XMFLOAT3 GetMoveVec() const;
 	float moveSpeed = 5.0f;
 	float turnSpeed = DirectX::XMConvertToRadians(720.0f);
 	void CollisionPlyerVsEnemies();
-	float jumpSpeed = 12.0f;
-	int jumpCount = 0;
-	int jumpLimit = 2;
-	ProjectileManager projectileManager;
 
 	std::unique_ptr<Effect> trailEffect = nullptr;
+	std::unique_ptr<Effect> WeponTrailEffect = nullptr;
 	Effekseer::Handle trailHandle = -1;
 
 	std::unique_ptr<AudioSource> hitSE = nullptr;
-
 	std::unique_ptr<Wepon> col = nullptr;
+	std::shared_ptr<Model> wepons[3];
+	int riskGauge[3] = {0,0,0};
+
+	int maxGauge = 100;
 
 	Stage* stage;
 	bool wasPressed = false;
@@ -83,11 +83,26 @@ private:
 	float rushDist = 0.0f;
 	bool isChargeRush;
 
+	enum class HaveWepon
+	{
+		Sword,
+		Axe,
+		Spere,
+	};
+
+	HaveWepon nowWepon = HaveWepon::Axe;
+
+	int swordDamage = 5;
+	int AxeDamage = 10;
+	int SpearDamage = 3;
+
+	DirectX::XMFLOAT3 WeponTipPos{};
+
 	enum class State
 	{
 		Idle,
 		Run,
-		Rush,
+		Special,
 		Attack,
 	};
 	State								state = State::Idle;

@@ -4,40 +4,54 @@
 #include "ProjectileStraight.h"
 #include <imgui.h>
 
-EnemySlime::EnemySlime()
+EnemySlime::EnemySlime(Stage* map, Pathfinding* pf)
 {
-	hitEffect = new Effect("Data/Effect/hit.efk");
+	hitEffect = std::make_unique<Effect>("Data/Effect/hit.efk");
 	model = std::make_unique<Model>("Data/Model/Slime/Slime.mdl");
 	
+	InitializeEnemy(map, pf);
+
 	scale.x = scale.y = scale.z = 0.01f;
 	radius = 0.5f;
 	height = 1.0f;
 
-	//hitEffect = std::make_unique<Effect>("Data/Effect/hit.efk");
-
-	//徘徊ステートへ遷移
-	SetWanderState();
+	health = 100;
 }
 
 EnemySlime::~EnemySlime()
 {
-	delete hitEffect;
 }
 
-void EnemySlime::Update(float elapsedTime)
+void EnemySlime::Update(float elapsedTime, Tower& tower)
 {
+	float dx = Player::Instance().GetPosition().x - position.x;
+	float dz = Player::Instance().GetPosition().z - position.z;
+	float dist = sqrtf(dx * dx + dz * dz);
+
+	float tdx = tower.GetPosition().x - position.x;
+	float tdz = tower.GetPosition().z - position.z;
+	float tdist = sqrtf(tdx * tdx + tdz * tdz);
+
 	switch (state)
 	{
-	case State::Wander:
-		UpdateWanderState(elapsedTime);
+	case EnemySlime::State::Wander:
+		UpdateEnemy(elapsedTime, tower);
+		
+		if (dist < attackCanRange || tdist < attackCanRange)
+		{
+			state = State::Attack;
+			stateTimer = 1.0f;
+		}
 		break;
-	case State::Idle:
-		UpdateIdleState(elapsedTime);
-		break;
-	case State::Attack:
-		UpdateAttackState(elapsedTime);
+	case EnemySlime::State::Attack:
+		UpdateAttackState(elapsedTime,tower);
+		if (dist > attackCanRange&&tdist > attackCanRange&& stateTimer <= 0.0f)
+		{
+			state = State::Wander;
+		}
 		break;
 	}
+
 	UpdateTransform();
 
 	model->UpdateTransform();
@@ -69,29 +83,13 @@ void EnemySlime::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* re
 	//基底クラスのデバッグプリミティブ描画
 	Enemy::RenderDebugPrimitive(rc, renderer);
 	//なわばり範囲をデバッグ円柱描画
-	renderer->RenderCylinder(rc, territoryOrigine, territoryRange, 1.0f,DirectX::XMFLOAT4(0,1,0,1));
+	renderer->RenderCylinder(rc, position, attackSearchRange, 1.0f, DirectX::XMFLOAT4(0, 1, 0, 1));
+	renderer->RenderCylinder(rc, position, attackCanRange, 1.0f, DirectX::XMFLOAT4(1, 0, 0, 1));
 	//ターゲット位置をデバッグ球描画
 	if (targetPosition.x != FLT_MAX)
 	{
 		renderer->RenderSphere(rc, targetPosition, 1.0f, DirectX::XMFLOAT4(1, 1, 0, 1));
 	}
-	//索敵範囲をデバッグ円描画
-	renderer->RenderCylinder(rc, position, searchRange, 1.0f, DirectX::XMFLOAT4(1, 0, 0, 1));
-}
-
-void EnemySlime::SetTerritory(const DirectX::XMFLOAT3& origin, float range)
-{
-	territoryOrigine = origin;
-	territoryRange = range;
-}
-
-void EnemySlime::SetRandamTargetPosition()
-{
-	float theta = MathUtils::RandomRangeFloat(-DirectX::XM_PI, DirectX::XM_PI);
-	float range = MathUtils::RandomRangeFloat(0.0f, territoryRange);
-	targetPosition.x = territoryOrigine.x + sinf(theta) * range;
-	targetPosition.y = territoryOrigine.y;
-	targetPosition.z = territoryOrigine.z + cosf(theta) * range;
 }
 
 void EnemySlime::MoveToTarget(float elapsedTime, float moveSpeedRate, float turnSpeedRate)
@@ -111,77 +109,6 @@ void EnemySlime::MoveToTarget(float elapsedTime, float moveSpeedRate, float turn
 void EnemySlime::SetWanderState()
 {
 	state = State::Wander;
-
-	//目標地点
-	SetRandamTargetPosition();
-}
-
-void EnemySlime::UpdateWanderState(float elapsedTime)
-{
-	//目標地点までXZ平面での距離判定
-	float vx = targetPosition.x - position.x;
-	float vz = targetPosition.z - position.z;
-	float distSq = vx * vx + vz * vz;
-	if (distSq < radius * radius)
-	{
-		//次の目標地点設定
-		SetIdleState();
-	}
-	if (SearchPlayer())
-	{
-		SetAttackState();
-	}
-	MoveToTarget(elapsedTime,1.0f,1.0f);
-}
-
-void EnemySlime::SetIdleState()
-{
-	state = State::Idle;
-
-	//タイマー
-	stateTimer = MathUtils::RandomRangeFloat(3.0f, 5.0f);
-}
-
-//待機更新
-void EnemySlime::UpdateIdleState(float elapsedTime)
-{
-	stateTimer -= elapsedTime;
-	if (stateTimer < 0.0f)
-	{
-		//徘徊へ遷移
-		SetWanderState();
-	}
-	if (SearchPlayer())
-	{
-		targetPosition = { FLT_MAX, FLT_MAX, FLT_MAX };
-		SetAttackState();
-	}
-}
-bool EnemySlime::SearchPlayer()
-{
-	//プレイヤーとの皇帝さを考慮して3Dでの距離判定をする
-	const DirectX::XMFLOAT3& playerPosition = Player::Instance().GetPosition();
-	float vx = playerPosition.x - position.x;
-	float vy = playerPosition.y - position.y;
-	float vz = playerPosition.z - position.z;
-	float dist = sqrtf(vx * vx + vy * vy + vz * vz);
-	if (dist < searchRange)
-	{
-		float distXZ = sqrtf(vx * vx + vz * vz);
-		//単位ベクトル化
-		vx /= distXZ;
-		vz /= distXZ;
-		//前方ベクトル
-		float frontX = sinf(angle.y);
-		float frontZ = cosf(angle.y);
-		//2つのベクトルの内積値で前後判定
-		float dot = (frontX * vx) + (frontZ * vz);
-		if (dot > 0.0f)
-		{
-			return true;
-		}
-	}
-	return false;
 }
 
 void EnemySlime::SetAttackState()
@@ -191,53 +118,57 @@ void EnemySlime::SetAttackState()
 	stateTimer = 0.0f;
 }
 
-void EnemySlime::UpdateAttackState(float elapsedTime)
+void EnemySlime::UpdateAttackState(float elapsedTime,Tower& tower)
 {
-	targetPosition = Player::Instance().GetPosition();
+	float pdx = Player::Instance().GetPosition().x - position.x;
+	float pdz = Player::Instance().GetPosition().z - position.z;
+	float pdist = sqrtf(pdx * pdx + pdz * pdz);
+
+	float tdx = tower.GetPosition().x - position.x;
+	float tdz = tower.GetPosition().z - position.z;
+	float tdist = sqrtf(tdx * tdx + tdz * tdz);
+
+	if (pdist < tdist)
+	{
+		targetPosition = Player::Instance().GetPosition();
+		if (attackInterval < 0.0f)
+		{
+			Player::Instance().ApplyDamage(1, 0.0f);
+			attackInterval = 1.0f;
+		}
+	}
+	else
+	{
+		targetPosition = tower.GetPosition();
+		if (attackInterval < 0.0f)
+		{
+			tower.TowerApplyDamage(10);
+			attackInterval = 1.0f;
+		}
+	}
+
+	attackInterval -= elapsedTime;
 
 	MoveToTarget(elapsedTime, 0.0f, 1.0f);
 
 	stateTimer -= elapsedTime;
-	if (stateTimer < 0.0f)
-	{
-		DirectX::XMFLOAT3 dir;
-		dir.x = sinf(angle.y);
-		dir.y = 0.0f;
-		dir.z = cosf(angle.y);
-		//発射方向
-		DirectX::XMFLOAT3 pos;
-		pos.x = position.x;
-		pos.y = position.y + height * 0.5f;
-		pos.z = position.z;
-		//発射
-		ProjectileStraight* projectile = new ProjectileStraight(&projectileManager);
-		projectile->Launch(dir, pos);
-
-		stateTimer = 2.0f;
-	}
-	if (!SearchPlayer())
-	{
-		targetPosition = { FLT_MAX, FLT_MAX, FLT_MAX };
-		SetIdleState();
-	}
 }
 
 void EnemySlime::PlayHitEffect()
 {
 	DirectX::XMFLOAT3 pos = position;
 	pos.y += 1.3f;
-	EnemySlime::hitEffect->Play(pos, 0.5f);
+	hitHandle = hitEffect->Play(pos, 0.5f);
 }
 
 void EnemySlime::DrawDebugGUI()
 {
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_Once);
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_FirstUseEver);
 
 	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 	{
-
 		ImGui::InputInt("EnemyNow", &health);
 		ImGui::End();
 	}

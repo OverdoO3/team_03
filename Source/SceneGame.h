@@ -5,6 +5,7 @@
 #include "CameraController.h"
 #include <wrl.h>
 #include <windows.h>
+#include "Pathfinding.h"
 
 // ÉQÅ[ÉÄÉVÅ[Éì
 class SceneGame : public Scene
@@ -29,8 +30,9 @@ public:
 	void DrawGUI() override;
 private:
 	std::unique_ptr<Stage> stage = nullptr;
+	std::unique_ptr<Pathfinding> pathfinding = nullptr;
 
-	//std::unique_ptr<Player> player = nullptr;
+	int maps[38][38];
 
 	std::unique_ptr<CameraController> cameraController = nullptr;
 };

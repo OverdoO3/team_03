@@ -1,19 +1,13 @@
 #include "EnemyManager.h"
 #include "collision.h"
 
-void EnemyManager::Update(float elapsedTime)
+void EnemyManager::Update(float elapsedTime,Tower& tower)
 {
-
 	std::vector<Enemy*> removes;
 
 	for (const auto& enemy : enemies)
 	{
-		enemy->Update(elapsedTime);
-	}
-
-	for (const auto& enemy : enemies)
-	{
-		enemy->Update(elapsedTime);
+		enemy->Update(elapsedTime,tower);
 		if (enemy->GetHP() <= 0)
 		{
 			removes.push_back(enemy.get());

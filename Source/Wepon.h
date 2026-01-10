@@ -10,7 +10,7 @@ public:
 	~Wepon();
 private:
 
-	float radius = 0.2f;
+	float radius = 1.0f;
 
 	float timer = 0.0f;
 

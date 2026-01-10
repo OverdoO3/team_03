@@ -166,3 +166,39 @@ bool Collision::IntersectBoxVsCylinder(
     }
 }
 
+bool Collision::CapsuleVsSphere(
+    const DirectX::XMFLOAT3& A,    // Capsule端点1
+    const DirectX::XMFLOAT3& B,    // Capsule端点2
+    float capsuleRadius,
+    const DirectX::XMFLOAT3& C,    // Sphere中心
+    float sphereRadius)
+{
+    using namespace DirectX;
+
+    XMVECTOR a = XMLoadFloat3(&A);
+    XMVECTOR b = XMLoadFloat3(&B);
+    XMVECTOR c = XMLoadFloat3(&C);
+
+    // AB ベクトル
+    XMVECTOR ab = XMVectorSubtract(b, a);
+    XMVECTOR ac = XMVectorSubtract(c, a);
+
+    // 線分上の t (0~1 にクランプ)
+    float abLenSq = XMVectorGetX(XMVector3Dot(ab, ab));
+    float t = (abLenSq > 0.0001f)
+        ? XMVectorGetX(XMVector3Dot(ac, ab)) / abLenSq
+        : 0.0f;
+
+    t = std::clamp(t, 0.0f, 1.0f);
+
+    // 最近接点 P = A + AB * t
+    XMVECTOR p = XMVectorAdd(a, XMVectorScale(ab, t));
+
+    // 距離
+    XMVECTOR diff = XMVectorSubtract(p, c);
+    float distSq = XMVectorGetX(XMVector3Dot(diff, diff));
+
+    float r = capsuleRadius + sphereRadius;
+    return distSq <= r * r;
+}
+

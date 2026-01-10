@@ -8,12 +8,13 @@
 class EnemySlime : public Enemy
 {
 public:
-	Effect* hitEffect;
+	std::unique_ptr<Effect> hitEffect;
+	Effekseer::Handle hitHandle = -1;
 public:
-	EnemySlime();
+	EnemySlime(Stage* map, Pathfinding* pf);
 	~EnemySlime() override;
 
-	void Update(float elapsedTime) override;
+	void Update(float elapsedTime,Tower& tower) override;
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer)override;
 
@@ -22,35 +23,27 @@ public:
 	void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer) override;
 
 	void PlayHitEffect();
-
-	void SetTerritory(const DirectX::XMFLOAT3& origin, float range);
 private:
-	void SetRandamTargetPosition();
-	void MoveToTarget(float elapsedTime, float moveSpeedRate, float turnSpeedRate);
 	void SetWanderState();
-	void UpdateWanderState(float elapsedTime);
-	void SetIdleState();
-	void UpdateIdleState(float elapsedTime);
-	bool SearchPlayer();
 	void SetAttackState();
-	void UpdateAttackState(float elapsedTime);
-
+	void UpdateAttackState(float elapsedTime,Tower& tower);
 	void DrawDebugGUI();
+
+	void MoveToTarget(float elapsedTime, float moveSpeedRate, float turnSpeedRate);
 
 	enum class State
 	{
 		Wander,
-		Idle,
 		Attack
 	};
 
 	State state = State::Wander;
 	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
-	DirectX::XMFLOAT3 territoryOrigine = { 0,0,0 };
-	float territoryRange = 10.0f;
 	float moveSpeed = 2.0f;
 	float turnSpeed = DirectX::XMConvertToRadians(360);
 	float stateTimer = 0.0f;
-	float searchRange = 5.0f;
+
+	float attackInterval = 0.0f;
+	 
 	ProjectileManager projectileManager;
 };

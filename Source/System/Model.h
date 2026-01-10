@@ -27,6 +27,7 @@ public:
 
 	// 行列計算
 	void UpdateTransform();
+	void UpdateNodeTransform(Node& node);
 
 	// ノードリスト取得
 	const std::vector<Node>& GetNodes() const { return nodes; }

@@ -50,4 +50,11 @@ public:
 		float cylinderH,
 		DirectX::XMFLOAT3& outPosition
 	);
+
+	static bool CapsuleVsSphere(
+		const DirectX::XMFLOAT3& A,    // Capsule端点1
+		const DirectX::XMFLOAT3& B,    // Capsule端点2
+		float capsuleRadius,
+		const DirectX::XMFLOAT3& C,    // Sphere中心
+		float sphereRadius);
 };

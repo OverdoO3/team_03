@@ -64,7 +64,7 @@ protected:
 	bool isGround = false;
 	float airControl = 0.3f;
 
-	std::unique_ptr<Model> model = nullptr;
+	std::shared_ptr<Model> model = nullptr;
 
 	void Move(float elapsedTime, float vx, float vz, float speed);
 
@@ -85,6 +85,8 @@ protected:
 	virtual void OnDead() {}
 
 	void UpdateInvincibleTimer(float elapsedTime);
+
+	bool MoveTowards(const DirectX::XMFLOAT3& target, float speed, float dt, float arriveEps = 0.05f);
 private:
 	void UpdateHorizontalVelocity(float elapsedTime);
 

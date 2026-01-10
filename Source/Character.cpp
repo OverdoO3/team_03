@@ -1,4 +1,5 @@
 #include "Character.h"
+#include <algorithm>
 
 void Character::UpdateTransform()
 {
@@ -32,8 +33,6 @@ bool Character::ApplyDamage(int damage,float invincibleTime)
 
 	this->invincibleTime = invincibleTime;
 
-	
-
 	health -= damage;
 	{
 		OnDamage();
@@ -44,39 +43,35 @@ bool Character::ApplyDamage(int damage,float invincibleTime)
 void Character::Turn(float elapsedTime, float vx, float vz, float speed)
 {
 	speed *= elapsedTime;
-	//進行ベクトルがゼロの場合は処理なし
-	DirectX::XMFLOAT3 vec;
-	vec.x = vx;
-	vec.z = vz;
-	if (vec.x == 0 && vec.z == 0)return;
 
-	//進行ベクトルを単位化
+	DirectX::XMFLOAT3 vec{ vx, 0.0f, vz };
+	if (vec.x == 0 && vec.z == 0) return;
+
 	float length = sqrtf(vec.x * vec.x + vec.z * vec.z);
 	vec.x /= length;
 	vec.z /= length;
-	//プレイヤーの回転力前方向を求める
+
 	float frontX = sinf(angle.y);
 	float frontZ = cosf(angle.y);
-	//左右判定を行うために二つの単位ベクトルの外積を計算
+
 	float cross = (frontZ * vec.x) - (frontX * vec.z);
-	//回転角を求めるため、2つのいベクトルの内積を計算する
 	float dot = (vec.x * frontX) + (vec.z * frontZ);
-	//内積値は-1.0～1.0で表現されており、2つの単位ベクトルの角度が
-	// 小さいほど1.0に近づくという性質を利用して回転速度を調整する
-	float rot = 1.0 - dot;
-	//2Dの外積値が正の場合か負の場合によって左右判定が行える
-	//左右判定を行う事によって左右回転を選択する
+
+	dot = std::clamp(dot, -1.0f, 1.0f);
+
+	float rot = 1.0f - dot;
+	float turn = speed * rot;
+
 	if (cross < 0.0f)
 	{
-		speed - rot;
-		angle.y -= speed;
+		angle.y -= turn;
 	}
 	else
 	{
-		speed - rot;
-		angle.y += speed;
+		angle.y += turn;
 	}
 }
+
 
 void Character::Jump(float speed)
 {
@@ -123,9 +118,9 @@ void Character::UpdateVerticalMove(float elapsedTime)
 {
 	position.y += velocity.y * elapsedTime;
 
-	if (position.y < 0.0f)
+	if (position.y < 2.0f)
 	{
-		position.y = 0.0f;
+		position.y = 2.0f;
 		velocity.y = 0.0f;
 
 		//着地した
@@ -147,6 +142,41 @@ void Character::UpdateInvincibleTimer(float elapsedTime)
 	{
 		invincibleTime -= elapsedTime;
 	}
+}
+
+bool Character::MoveTowards(const DirectX::XMFLOAT3& target, float speed, float dt, float arriveEps)
+{
+	// 目標までの差分（XZのみ）
+	float dx = target.x - position.x;
+	float dz = target.z - position.z;
+
+	float distSq = dx * dx + dz * dz;
+	float epsSq = arriveEps * arriveEps;
+
+	// すでに十分近い
+	if (distSq <= epsSq)
+		return true;
+
+	float dist = std::sqrt(distSq);
+
+	// 進行方向（正規化）
+	float nx = dx / dist;
+	float nz = dz / dist;
+
+	// 進める距離（このフレームで）
+	float step = speed * dt;
+
+	// 行き過ぎ防止（ピッタリ止める）
+	if (step >= dist)
+	{
+		position.x = target.x;
+		position.z = target.z;
+		return true;
+	}
+
+	position.x += nx * step;
+	position.z += nz * step;
+	return false;
 }
 
 void Character::UpdateHorizontalVelocity(float elapsedTime)
@@ -209,10 +239,6 @@ void Character::UpdateHorizontalMove(float elapsedTime)
 
 void Character::Move(float elapsedTime, float vx, float vz, float speed)
 {
-	/*speed *= elapsedTime;
-	position.x += vx * speed;
-	position.z += vz * speed;*/
-
 	//移動方向ベクトルを設定
 	moveVecX = vx;
 	moveVecZ = vz;
@@ -220,3 +246,5 @@ void Character::Move(float elapsedTime, float vx, float vz, float speed)
 	//最大速度設定
 	maxMoveSpeed = speed;
 }
+
+

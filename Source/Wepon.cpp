@@ -3,6 +3,7 @@
 Wepon::Wepon()
 {
 	angle = { 0,0,0 };
+	UpdateTransfomEuler();
 }
 
 Wepon::~Wepon()
@@ -28,7 +29,6 @@ void Wepon::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* rendere
 	if (isAttack)
 	{
 		renderer->RenderCapsule(rc, transform, radius, 1, { 1,0,0,1 });
-		
 	}
 	else
 	{

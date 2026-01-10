@@ -270,6 +270,18 @@
     <ClInclude Include="Source\Wepon.h">
       <Filter>Source\Chara</Filter>
     </ClInclude>
+    <ClInclude Include="Source\TrailMesh.h">
+      <Filter>Source\Chara</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Node.h">
+      <Filter>Source\Stages</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Pathfinding.h">
+      <Filter>Source\Stages</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\tower.h">
+      <Filter>Source\Stages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -430,6 +442,15 @@
     </ClCompile>
     <ClCompile Include="Source\Wepon.cpp">
       <Filter>Source\Chara</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TrailMesh.cpp">
+      <Filter>Source\Chara</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Pathfinding.cpp">
+      <Filter>Source\Stages</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\tower.cpp">
+      <Filter>Source\Stages</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

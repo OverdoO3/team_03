@@ -18,7 +18,7 @@ public:
 		return instance;
 	}
 
-	void Update(float elapsedTime);
+	void Update(float elapsedTime,Tower& tower);
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer);
 
