@@ -9,6 +9,7 @@
 #include "SceneGame.h"
 #include "SceneTitle.h"
 #include "SceneManager.h"
+#include "SceneGame.h"
 #include "EffectManager.h"
 #include "System/Audio.h"
 #include "System/ResourceManager.h"

@@ -18,6 +18,8 @@ public:
 		return instance;
 	}
 
+	void Finalize();
+
 	void Update(float elapsedTime,Tower& tower);
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer);
@@ -37,5 +39,7 @@ public:
 	void CollisionEnemyVsEnemies();
 private:
 	std::vector<std::unique_ptr<Enemy>> enemies;
+
+	std::vector<std::unique_ptr<Enemy>> removes;
 
 };

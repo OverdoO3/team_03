@@ -64,6 +64,12 @@ protected:
 	bool isGround = false;
 	float airControl = 0.3f;
 
+	int									animationIndex = -1;
+	float								animationSeconds = 0.0f;
+	bool								animationLoop = false;
+	bool								animationPlaying = false;
+	float								animationBlendSecondsLength = 0.2f;
+
 	std::shared_ptr<Model> model = nullptr;
 
 	void Move(float elapsedTime, float vx, float vz, float speed);
@@ -87,6 +93,11 @@ protected:
 	void UpdateInvincibleTimer(float elapsedTime);
 
 	bool MoveTowards(const DirectX::XMFLOAT3& target, float speed, float dt, float arriveEps = 0.05f);
+
+	void PlayAnimation(int index, bool loop);
+	void PlayAnimation(const char* name, bool loop);
+	void UpdateAnimation(float elapsedTime);
+
 private:
 	void UpdateHorizontalVelocity(float elapsedTime);
 

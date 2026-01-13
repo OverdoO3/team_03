@@ -36,16 +36,14 @@ public:
 	void CollisionWeponVsEnemies();
 
 	void InputAttack();
+	void InputAvoid();
+
 	void InputRush(float elapsedTime, const int(&maps)[38][38]);
+	void InputCharge(float elapsedTime);
 
 	void setStage(Stage* s) { stage = s; }
 
-	void PlayAnimation(int index, bool loop);
-	void PlayAnimation(const char* name, bool loop);
-
-	void UpdateAnimation(float elapsedTime);
-
-	void MoveWithCollision(float elapsedTime,float dx,float dz,const int(&maps)[38][38],bool isRush = false);
+	void MoveWithCollision(float elapsedTime,float dx,float dz,const int(&maps)[38][38],float value = 1);
 
 	void ChangeWepon();
 private:
@@ -67,14 +65,9 @@ private:
 	int maxGauge = 100;
 
 	Stage* stage;
-	bool wasPressed = false;
-	bool wasPressedR = false;
 
-	int									animationIndex = -1;
-	float								animationSeconds = 0.0f;
-	bool								animationLoop = false;
-	bool								animationPlaying = false;
-	float								animationBlendSecondsLength = 0.2f;
+	float avoidTimer = 0.0f;
+	DirectX::XMFLOAT3 avoidVec = { 0,0,0 };
 
 	float rushSpeed = 14.0f;
 	DirectX::XMFLOAT3 rushVec = { 0,0,0 };
@@ -82,6 +75,10 @@ private:
 	float rushTime = 0.2f;
 	float rushDist = 0.0f;
 	bool isChargeRush;
+
+	float chargeTime = 0.0f;
+	float chargeValue = 1.0f;
+	float chargestil = 0.0f;
 
 	enum class HaveWepon
 	{
@@ -102,7 +99,10 @@ private:
 	{
 		Idle,
 		Run,
-		Special,
+		Avoid,
+		Rush,
+		Charge,
+		Chain,
 		Attack,
 	};
 	State								state = State::Idle;

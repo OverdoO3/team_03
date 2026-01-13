@@ -7,6 +7,7 @@
 #include "Stage.h"
 #include "Pathfinding.h"
 #include "tower.h"
+#include "EnemyWepon.h"
 
 using namespace DirectX;
 
@@ -51,6 +52,8 @@ public:
 		}
 	}
 
+	EnemyWepon enemyWepon;
+
 	virtual void PlayHitEffect() {}
 
 	bool wasHit = false;
@@ -58,6 +61,12 @@ public:
 	void SetReady(bool a) { ready = a; }
 
 	bool target = true;
+
+	enum class EnemyType
+	{
+		Melee,  //ãﬂê⁄
+		Ranged, //âìãóó£
+	};
 protected:
 	void RequestPath(const DirectX::XMFLOAT3& playerPos);
 	void MoveAlongPath(float elapsedTime);
@@ -81,8 +90,13 @@ protected:
 
 	bool ready = false;
 
-	float attackSearchRange = 7.0f;
-	float attackCanRange = 3.0f;
+	float meleeAttackSearchRange = 7.0f;
+	float meleeAttackCanRange = 1.2f;
+
+	float rangedAttackSearchRange = 8.0f;
+	float rangedAttackCanRange = 8.0f;
 
 	std::vector<Node*> debugPath;
+
+	EnemyType type;
 };

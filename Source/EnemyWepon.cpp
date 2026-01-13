@@ -1,16 +1,16 @@
-#include "Wepon.h"
+#include "EnemyWepon.h"
 
-Wepon::Wepon()
+EnemyWepon::EnemyWepon()
 {
 	angle = { 0,0,0 };
 	UpdateTransfomEuler();
 }
 
-Wepon::~Wepon()
+EnemyWepon::~EnemyWepon()
 {
 }
 
-void Wepon::Update(float elapsedTime)
+void EnemyWepon::Update(float elapsedTime)
 {
 	if (timer > 0.0f)
 	{
@@ -24,7 +24,7 @@ void Wepon::Update(float elapsedTime)
 	UpdateTransfomEuler();
 }
 
-void Wepon::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
+void EnemyWepon::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
 {
 	if (isAttack)
 	{

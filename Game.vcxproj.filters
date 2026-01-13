@@ -159,7 +159,7 @@
     <ClInclude Include="Source\System\Sprite.h">
       <Filter>Source\System</Filter>
     </ClInclude>
-    <ClInclude Include="Source\EnemySlime.h">
+    <ClInclude Include="Source\EnemyMelee.h">
       <Filter>Source\Chara</Filter>
     </ClInclude>
     <ClInclude Include="Source\Enemy.h">
@@ -282,6 +282,21 @@
     <ClInclude Include="Source\tower.h">
       <Filter>Source\Stages</Filter>
     </ClInclude>
+    <ClInclude Include="Source\SpecialAttack.h">
+      <Filter>Source\Chara</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\WaveManager.h">
+      <Filter>Source\Stages</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SpawnPoint.h">
+      <Filter>Source\Stages</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\EnemyCharge.h">
+      <Filter>Source\Chara</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\EnemyWepon.h">
+      <Filter>Source\Chara</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -359,7 +374,7 @@
     <ClCompile Include="Source\EnemyManager.cpp">
       <Filter>Source\Chara</Filter>
     </ClCompile>
-    <ClCompile Include="Source\EnemySlime.cpp">
+    <ClCompile Include="Source\EnemyMelee.cpp">
       <Filter>Source\Chara</Filter>
     </ClCompile>
     <ClCompile Include="Source\Player.cpp">
@@ -451,6 +466,18 @@
     </ClCompile>
     <ClCompile Include="Source\tower.cpp">
       <Filter>Source\Stages</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\WaveManager.cpp">
+      <Filter>Source\Stages</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SpawnPoint.cpp">
+      <Filter>Source\Stages</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\EnemyCharge.cpp">
+      <Filter>Source\Chara</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\EnemyWepon.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

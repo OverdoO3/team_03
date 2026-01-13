@@ -1,28 +1,34 @@
-#include "EnemySlime.h"
+#include "EnemyMelee.h"
 #include "MathUtils.h"
 #include "Player.h"
 #include "ProjectileStraight.h"
 #include <imgui.h>
 
-EnemySlime::EnemySlime(Stage* map, Pathfinding* pf)
+EnemyMelee::EnemyMelee(Stage* map, Pathfinding* pf)
 {
 	hitEffect = std::make_unique<Effect>("Data/Effect/hit.efk");
-	model = std::make_unique<Model>("Data/Model/Slime/Slime.mdl");
+	model = std::make_unique<Model>("Data/Model/Enemy/small_enemy.mdl");
 	
 	InitializeEnemy(map, pf);
 
-	scale.x = scale.y = scale.z = 0.01f;
+	scale.x = scale.y = scale.z = 0.05f;
 	radius = 0.5f;
 	height = 1.0f;
 
+	type = EnemyType::Melee;
+
 	health = 100;
+
+	UpdateTransform();
+
+	model->UpdateTransform();
 }
 
-EnemySlime::~EnemySlime()
+EnemyMelee::~EnemyMelee()
 {
 }
 
-void EnemySlime::Update(float elapsedTime, Tower& tower)
+void EnemyMelee::Update(float elapsedTime, Tower& tower)
 {
 	float dx = Player::Instance().GetPosition().x - position.x;
 	float dz = Player::Instance().GetPosition().z - position.z;
@@ -34,19 +40,20 @@ void EnemySlime::Update(float elapsedTime, Tower& tower)
 
 	switch (state)
 	{
-	case EnemySlime::State::Wander:
+	case EnemyMelee::State::Wander:
 		UpdateEnemy(elapsedTime, tower);
-		
-		if (dist < attackCanRange || tdist < attackCanRange)
+
+		if (dist < meleeAttackCanRange || tdist < meleeAttackCanRange)
 		{
 			state = State::Attack;
 			stateTimer = 1.0f;
 		}
 		break;
-	case EnemySlime::State::Attack:
+	case EnemyMelee::State::Attack:
 		UpdateAttackState(elapsedTime,tower);
-		if (dist > attackCanRange&&tdist > attackCanRange&& stateTimer <= 0.0f)
+		if (dist > meleeAttackCanRange&&tdist > meleeAttackCanRange&& stateTimer <= 0.0f)
 		{
+			enemyWepon.SetIsAttack(false);
 			state = State::Wander;
 		}
 		break;
@@ -59,40 +66,32 @@ void EnemySlime::Update(float elapsedTime, Tower& tower)
 	UpdateInvincibleTimer(elapsedTime);
 
 	UpdateVelocity(elapsedTime);
-
-	projectileManager.Update(elapsedTime);
 }
 
-void EnemySlime::Render(const RenderContext& rc, ModelRenderer* renderer)
+void EnemyMelee::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
 	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);
-
-	//弾丸描画
-	projectileManager.Render(rc, renderer);
 
 	DrawDebugGUI();
 }
 
-void EnemySlime::OnDead()
+void EnemyMelee::OnDead()
 {
 	
 }
 
-void EnemySlime::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
+void EnemyMelee::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
 {
 	//基底クラスのデバッグプリミティブ描画
 	Enemy::RenderDebugPrimitive(rc, renderer);
 	//なわばり範囲をデバッグ円柱描画
-	renderer->RenderCylinder(rc, position, attackSearchRange, 1.0f, DirectX::XMFLOAT4(0, 1, 0, 1));
-	renderer->RenderCylinder(rc, position, attackCanRange, 1.0f, DirectX::XMFLOAT4(1, 0, 0, 1));
-	//ターゲット位置をデバッグ球描画
-	if (targetPosition.x != FLT_MAX)
-	{
-		renderer->RenderSphere(rc, targetPosition, 1.0f, DirectX::XMFLOAT4(1, 1, 0, 1));
-	}
+	renderer->RenderCylinder(rc, position, meleeAttackSearchRange, 1.0f, DirectX::XMFLOAT4(0, 1, 0, 1));
+	renderer->RenderCylinder(rc, position, meleeAttackCanRange, 1.0f, DirectX::XMFLOAT4(1, 0, 0, 1));
+
+	enemyWepon.RenderDebugPrimitive(rc, renderer);
 }
 
-void EnemySlime::MoveToTarget(float elapsedTime, float moveSpeedRate, float turnSpeedRate)
+void EnemyMelee::MoveToTarget(float elapsedTime, float moveSpeedRate, float turnSpeedRate)
 {
 	//ターゲット方向への進行ベクトルを算出
 	float vx = targetPosition.x - position.x;
@@ -106,19 +105,19 @@ void EnemySlime::MoveToTarget(float elapsedTime, float moveSpeedRate, float turn
 	Turn(elapsedTime, vx, vz, turnSpeed * turnSpeedRate);
 }
 
-void EnemySlime::SetWanderState()
+void EnemyMelee::SetWanderState()
 {
 	state = State::Wander;
 }
 
-void EnemySlime::SetAttackState()
+void EnemyMelee::SetAttackState()
 {
 	state = State::Attack;
 
 	stateTimer = 0.0f;
 }
 
-void EnemySlime::UpdateAttackState(float elapsedTime,Tower& tower)
+void EnemyMelee::UpdateAttackState(float elapsedTime,Tower& tower)
 {
 	float pdx = Player::Instance().GetPosition().x - position.x;
 	float pdz = Player::Instance().GetPosition().z - position.z;
@@ -134,6 +133,8 @@ void EnemySlime::UpdateAttackState(float elapsedTime,Tower& tower)
 		if (attackInterval < 0.0f)
 		{
 			Player::Instance().ApplyDamage(1, 0.0f);
+			enemyWepon.SetIsAttack(true);
+			enemyWepon.SetPosition(position);
 			attackInterval = 1.0f;
 		}
 	}
@@ -154,14 +155,14 @@ void EnemySlime::UpdateAttackState(float elapsedTime,Tower& tower)
 	stateTimer -= elapsedTime;
 }
 
-void EnemySlime::PlayHitEffect()
+void EnemyMelee::PlayHitEffect()
 {
 	DirectX::XMFLOAT3 pos = position;
 	pos.y += 1.3f;
 	hitHandle = hitEffect->Play(pos, 0.5f);
 }
 
-void EnemySlime::DrawDebugGUI()
+void EnemyMelee::DrawDebugGUI()
 {
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_Once);
@@ -169,7 +170,7 @@ void EnemySlime::DrawDebugGUI()
 
 	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 	{
-		ImGui::InputInt("EnemyNow", &health);
+		ImGui::InputInt("EnemyHP", &health);
 		ImGui::End();
 	}
 }

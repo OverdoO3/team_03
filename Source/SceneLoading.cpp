@@ -7,15 +7,20 @@ void SceneLoading::Initialize()
 {
 	sprite = std::make_unique<Sprite>("Data/Sprite/LoadingIcon.png");
 
-	thread = new std::thread(&SceneLoading::LoadingThread, this);
+	thread = new std::thread(&LoadingThread, this);
 }
 
 void SceneLoading::Finalize()
 {
-	//スレッド終了化
-	if (IsReady() == false)
+	if (thread)
 	{
-		thread->join();
+		//スレッド終了化
+		if (thread->joinable())
+		{
+			thread->join();
+		}
+		delete thread;
+		thread = nullptr;
 	}
 }
 

@@ -3,11 +3,11 @@
 #include "System/ShapeRenderer.h"
 #include "Obj.h"
 
-class Wepon : public Obj
+class EnemyWepon : public Obj
 {
 public:
-	Wepon();
-	~Wepon();
+	EnemyWepon();
+	~EnemyWepon();
 private:
 
 	float radius = 1.0f;

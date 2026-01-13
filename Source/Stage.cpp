@@ -27,6 +27,7 @@ Stage::Stage()
 			}
 		}
 	}
+
 }
 
 Stage::~Stage()
@@ -36,7 +37,7 @@ Stage::~Stage()
 //更新処理
 void Stage::Update(float elapsedTime)
 {
-
+	
 }
 
 //描画処理
@@ -85,9 +86,27 @@ void Stage::DebugDrawGrid(const RenderContext& rc,ShapeRenderer* renderer,ModelR
 			else if (map[z][x] == 2)
 			{// タワーセル
 				color = { 0.0f, 0.0f, 1.0f, 1.0f };
+				renderer->RenderBox(
+					rc,
+					pos,
+					{ 0,0,0 },
+					{ 1.0f - margin, 5.0f, 1.0f - margin },
+					color
+				);
 				tower->SetPosition(pos);
 				tower->UpdateTransfomEuler();
 				tower->Render(rc, modelRenderer);
+			}
+			else if (map[z][x] == 3)
+			{// スポーンセル
+				color = { 1.0f, 0.0f, 1.0f, 1.0f };
+				renderer->RenderBox(
+					rc,
+					pos,
+					{ 0,0,0 },
+					{ 1.0f - margin, boxHeight, 1.0f - margin },
+					color
+				);
 			}
 		}
 	}
@@ -99,7 +118,7 @@ bool Stage::IsWalkable(int x, int z) const
 	if (x < 0 || z < 0 || x >= WIDTH || z >= HEIGHT)
 		return false;
 
-	return map[z][x] == 0;
+	return (map[z][x] == 0||map[z][x] == 2||map[z][x] == 3);
 }
 
 bool Stage::WorldToGrid(const DirectX::XMFLOAT3& pos, int& x, int& z) const
@@ -120,9 +139,9 @@ DirectX::XMFLOAT3 Stage::GridToWorld(int x, int z) const
 	constexpr int OFFSET_Z = HEIGHT / 2;
 
 	return {
-		(x - OFFSET_X + 0.5f) * CELL_SIZE,
+		(x - OFFSET_X + 1.0f) * CELL_SIZE,
 		0.0f,
-		(z - OFFSET_Z + 0.5f) * CELL_SIZE
+		(z - OFFSET_Z) * CELL_SIZE
 	};
 }
 

@@ -4,13 +4,18 @@ void SceneManager::Update(float elapsedTime)
 {
 	if (nextScene != nullptr)
 	{
-		//古いシーンを終了
+		//終了
 		Clear();
-		//新しいシーンを設定
+
+		//新しいシーン設定
 		currentScene = nextScene;
 		nextScene = nullptr;
-		//シーン初期化
-		currentScene->Initialize();
+
+		//初期化
+		if (currentScene->IsReady() == false)
+		{
+			currentScene->Initialize();
+		}
 	}
 
 	if (currentScene != nullptr)

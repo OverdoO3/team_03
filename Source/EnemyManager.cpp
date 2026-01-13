@@ -1,6 +1,11 @@
 #include "EnemyManager.h"
 #include "collision.h"
 
+void EnemyManager::Finalize()
+{
+	enemies.clear();
+}
+
 void EnemyManager::Update(float elapsedTime,Tower& tower)
 {
 	std::vector<Enemy*> removes;
@@ -69,10 +74,10 @@ void EnemyManager::CollisionEnemyVsEnemies()
 	int enemyCount = enemymanager.GetEnemyCount();
 	for (int i = 0; i < enemyCount; ++i)
 	{
-		for (int j = i+1; j < enemyCount; ++j)
+		for (int j = i + 1; j < enemyCount; ++j)
 		{
-			Enemy* enemy1 = enemymanager.GetEnemy(i);
-			Enemy* enemy2 = enemymanager.GetEnemy(j);
+			Enemy* enemy1 = enemymanager.GetEnemy(j);
+			Enemy* enemy2 = enemymanager.GetEnemy(i);
 
 			DirectX::XMFLOAT3 outPosition;
 			/*if (Collision::IntersectSphereVsSpgere(enemy1->GetPosition(), enemy1->GetRadius(), enemy2->GetPosition(), enemy2->GetRadius(), outPosition))

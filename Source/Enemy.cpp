@@ -20,19 +20,31 @@ void Enemy::UpdateEnemy(float dt,Tower& tower)
 	float dist1 = sqrtf(dx1 * dx1 + dz1 * dz1);
 
 	XMFLOAT3 targetPos{};
-	if (attackSearchRange > dist1)
+	if (type == EnemyType::Melee)
 	{
-		targetPos = Player::Instance().GetPosition();
-		target = true;
+		if (meleeAttackSearchRange > dist1)
+		{
+			targetPos = Player::Instance().GetPosition();
+			target = true;
+		}
+		else
+		{
+			targetPos = tower.GetPosition();
+			target = false;
+		}
 	}
-	else
+	else if (type == EnemyType::Ranged)
 	{
-		DirectX::XMFLOAT3 tar = tower.GetPosition();
-		tar.x += 1.0f;
-		tar.z += 1.0f;
-
-		targetPos = tar;
-		target = false;
+		if (rangedAttackSearchRange > dist1)
+		{
+			targetPos = Player::Instance().GetPosition();
+			target = true;
+		}
+		else
+		{
+			targetPos = tower.GetPosition();
+			target = false;
+		}
 	}
 
 	if (pathTimer >= pathInterval)
@@ -50,7 +62,7 @@ void Enemy::UpdateEnemy(float dt,Tower& tower)
 		return;
 	}
 
-	MoveAlongPath(dt);
+	//MoveAlongPath(dt);
 
 	// ==== スタック判定 ====
 
@@ -98,6 +110,8 @@ void Enemy::MoveAlongPath(float elapsedTime)
 	Node* node = path[pathIndex];
 	XMFLOAT3 target = stage->GridToWorld(node->x, node->z);
 
+	XMFLOAT3 vec = { target.x - position.x,target.y - position.y,target.z - position.z };
+	Turn(elapsedTime, vec.x, vec.z, moveSpeed);
 	if (MoveTowards(target, moveSpeed, elapsedTime))
 	{
 		pathIndex++;

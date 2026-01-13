@@ -2,20 +2,29 @@
 #include "Camera.h"
 #include "SceneGame.h"
 #include "EnemyManager.h"
-#include "EnemySlime.h"
 #include "Player.h"
 #include "EffectManager.h"
 #include "nlohmann/json.hpp"
 #include "fstream"
+#include "SceneManager.h"
+#include "SceneLoading.h"
+#include "SceneTitle.h"
+
 using json = nlohmann::json;
 // 初期化
 void SceneGame::Initialize()
 {
+	test = std::make_unique<Sprite>("Data/Sprite/yazirusi.png");
 	stage = std::make_unique<Stage>();
 	pathfinding = std::make_unique<Pathfinding>();
 	pathfinding->Initialize(stage.get());
 	Player::Instance().Initialize();
-	//player = new Player();
+	//WaveManager::Instance().MakeSpawnPoint({ 15,0,0 }, 0);
+
+	//WaveManager::Instance().MakeSpawnPoint({ 0,0,15 }, 1);
+
+	dummy = new EnemyMelee(stage.get(), pathfinding.get());
+	dummy->InitializeEnemy(stage.get(), pathfinding.get());
 
 	//カメラしょきか
 	Graphics& graphics = Graphics::Instance();
@@ -43,20 +52,16 @@ void SceneGame::Initialize()
 			for (int j = 0;j < data["Height"];j++)
 			{
 				stage->IsWalkable(i, j);
+				
 				maps[i][j] = data["cells"][index++].get<int>();
+				if (maps[j][i] == 3)
+				{
+					DirectX::XMFLOAT3 pos;
+					pos = stage->GridToWorld(i, j);
+					WaveManager::Instance().MakeSpawnPoint(pos,0);
+				}
 			}
 		}
-	}
-
-	//エネミー初期化
-	EnemyManager& enemymanager = EnemyManager::Instance();
-	//for (int i = 0; i < 2;++i)
-	{
-		EnemySlime* slime = new EnemySlime(stage.get(), pathfinding.get());
-		slime->InitializeEnemy(stage.get(), pathfinding.get());
-		slime->SetPosition(DirectX::XMFLOAT3(1 * 2.0f, 0, 5));
-		slime->SetReady(true);
-		enemymanager.Register(slime);
 	}
 
 	Player::Instance().setStage(stage.get());
@@ -65,7 +70,8 @@ void SceneGame::Initialize()
 void SceneGame::Finalize()
 {
 	Player::Instance().Finalize();
-	EnemyManager& enemymanager = EnemyManager::Instance();
+	EnemyManager::Instance().Finalize();
+	delete dummy;
 }
 
 // 更新処理
@@ -79,9 +85,27 @@ void SceneGame::Update(float elapsedTime)
 	stage->Update(elapsedTime);
 	Player::Instance().Update(elapsedTime,maps);
 	EnemyManager& enemymanager = EnemyManager::Instance();
-	//enemymanager.Update(elapsedTime,Player::Instance().GetPosition());
 	enemymanager.Update(elapsedTime,*stage->GetTower());
 	EffectManager::Instance().Update(elapsedTime);
+
+	if (stage->GetTower()->GetHP() <= 0)
+	{
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
+	}
+
+	gameTimer += elapsedTime;
+
+	WaveManager::Instance().Update(elapsedTime, stage.get(), pathfinding.get());
+
+	/*if (gameTimer > 3.0f)
+	{
+		gameTimer = 0.0f;
+		EnemySlime* slime = new EnemySlime(stage.get(), pathfinding.get());
+		slime->InitializeEnemy(stage.get(), pathfinding.get());
+		slime->SetPosition(DirectX::XMFLOAT3(1 * 2.0f, 0, 5));
+		slime->SetReady(true);
+		enemymanager.Register(slime);
+	}*/
 }
 
 // 描画処理
@@ -107,6 +131,7 @@ void SceneGame::Render()
 		//player->Render(rc, modelRenderer);
 		//ステージ描画
 		stage->Render(rc, modelRenderer);
+		test->Render(rc, testPos.x, testPos.y, 1, 100, 100, testAngle, 1, 1, 1, 1);
 		Player::Instance().Render(rc, modelRenderer);
 		EnemyManager::Instance().Render(rc,modelRenderer);
 		EffectManager::Instance().Render(rc.view, rc.projection);
@@ -114,13 +139,14 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
-		
 		//player->RenderDebugPrimitive(rc, shapeRenderer);
 		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
 		//エネミーデバッグプリミティブ
 		EnemyManager::Instance().RenderDebugPrimitive(rc,shapeRenderer);
 
 		stage->DebugDrawGrid(rc, shapeRenderer,modelRenderer);
+
+		WaveManager::Instance().RenderDebugPrimitive(rc, shapeRenderer);
 	}
 
 	// 2Dスプライト描画
@@ -138,9 +164,12 @@ void SceneGame::DrawGUI()
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 200), ImGuiCond_Once);
 	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+	WaveManager::Instance().DebugGUI();
 
-	/*if (ImGui::Begin("Enemy", nullptr, ImGuiWindowFlags_None))
+	if (ImGui::Begin("TEST", nullptr, ImGuiWindowFlags_None))
 	{
+		ImGui::InputFloat3("pos", &testPos.x);
+		ImGui::InputFloat("angle", &testAngle);
 		ImGui::End();
-	}*/
+	}
 }

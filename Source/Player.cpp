@@ -68,21 +68,68 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 				PlayAnimation("Running", true);
 			}
 		}
-		InputRush(elapsedTime, maps);
+		switch (nowWepon)
+		{
+		case HaveWepon::Axe:
+			InputCharge(elapsedTime);
+			break;
+		case HaveWepon::Spere:
+			InputRush(elapsedTime, maps);
+			break;
+		case HaveWepon::Sword:
+			break;
+		default:
+			break;
+		}
+		InputAvoid();
 		InputAttack();
 		break;
 	}
-
 	case State::Run:
 	{
-		if (!InputMove(elapsedTime,maps))
+		if (!isChargeRush)
 		{
-			state = State::Idle;
-			PlayAnimation("Idle", true);
+			if (InputMove(elapsedTime, maps))
+			{
+				state = State::Idle;
+				PlayAnimation("Idle", true);
+			}
 		}
-		InputRush(elapsedTime, maps);
+
+		switch (nowWepon)
+		{
+		case HaveWepon::Axe:
+			InputCharge(elapsedTime);
+			break;
+		case HaveWepon::Spere:
+			InputRush(elapsedTime, maps);
+			break;
+		case HaveWepon::Sword:
+			break;
+		default:
+			break;
+		}
+		InputAvoid();
 		InputAttack();
 		moveSpeed = 5.0f;
+		break;
+	}
+
+	case State::Avoid:
+	{
+		avoidTimer -= elapsedTime;
+		MoveWithCollision(elapsedTime, avoidVec.x, avoidVec.z, maps, 5.0f);
+		col->SetIsAttack(false);
+		if (avoidTimer <= 0.0f)
+		{
+			velocity.x = 0;
+			velocity.z = 0;
+			chargeValue = 1.0f;
+			chargeTime = 0.0f;
+			chargestil = 1.0f;
+			
+			state = State::Idle;
+		}
 		break;
 	}
 
@@ -104,12 +151,14 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 		moveSpeed = 2.0f;
 		break;
 	}
-	case State::Special:
+
+	case State::Rush:
 	{
+		//突進
 		float dx = rushVec.x * rushSpeed * rushDist * elapsedTime;
 		float dz = rushVec.z * rushSpeed * rushDist * elapsedTime;
 
-		MoveWithCollision(elapsedTime,dx, dz, maps,true);
+		MoveWithCollision(elapsedTime, dx, dz, maps, 10.0f);
 
 		rushTimer -= elapsedTime;
 		col->SetPosition(position);
@@ -121,7 +170,21 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 		}
 		break;
 	}
+	case State::Charge:
+	{
+		InputCharge(elapsedTime);
+		InputAvoid();
+		chargestil -= elapsedTime;
+		if (chargestil <= 0.0f)
+		{
+			chargeValue = 1.0f;
+			chargeTime = 0.0f;
+			chargestil = 1.0f;
+			col->SetRadius(1.0f);
+			state = State::Idle;
+		}
 	}
+}
 
 	// トランスフォーム更
 	model->UpdateTransform();
@@ -171,10 +234,8 @@ void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* render
 
 void Player::InputAttack()
 {
-	//発射
-	bool isPressed = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
 	//if (GetAsyncKeyState(VK_LBUTTON))
-	if (!isPressed && wasPressed)
+	if (KeyInput::Instance().GetKeyDown(VK_LBUTTON))
 	{
 		Enemy* nearestEnemy = nullptr;
 		float nearestDist = FLT_MAX;
@@ -209,7 +270,7 @@ void Player::InputAttack()
 		dir.x = sinf(angle.y) * 2;
 		dir.y = 0.0f;
 		dir.z = cosf(angle.y) * 2;
-		//発射位置（プレイヤーの腰当たり）
+
 		DirectX::XMFLOAT3 pos;
 		pos.x = position.x;
 		pos.y = position.y + 0.8f;
@@ -229,18 +290,25 @@ void Player::InputAttack()
 		a.x = DirectX::XM_PI / 2;
 		col->SetAngle(a);
 	}
-	wasPressed = isPressed;
+}
 
+void Player::InputAvoid()
+{
+	if (avoidTimer <= 0.0f&&KeyInput::Instance().GetKeyDown(VK_LSHIFT))
+	{
+		avoidTimer = 0.2f;
+		state = State::Avoid;
+		avoidVec = GetMoveVec();
+		//PlayAnimation("Avoid", false);
+	}
 }
 
 void Player::InputRush(float elapsedTime, const int(&maps)[38][38])
 {
-	bool isPressedR = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
-
 	//右クリック押している間向きをカーソルの方向にするやーつ
 
 	DirectX::XMFLOAT3 vec{};
-	if (isPressedR)
+	if (KeyInput::Instance().GetKeyHold(VK_RBUTTON))
 	{
 		DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(), 0);
 		DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(), 1.0f);
@@ -280,164 +348,112 @@ void Player::InputRush(float elapsedTime, const int(&maps)[38][38])
 	}
 
 	// 離した瞬間：突進
-	if (!isPressedR && wasPressedR)
+	if (KeyInput::Instance().GetKeyUp(VK_RBUTTON))
 	{
+		state = State::Rush;
 		rushTimer = rushTime * rushDist;
-		state = State::Special;
 		moveSpeed = 5.0f;
 		isChargeRush = false;
 		col->SetIsAttack(true);
 		col->SetTimer(rushTimer);
 		//PlayAnimation("Attack", false);
 	}
-	wasPressedR = isPressedR;
 }
 
-// アニメーション再生
-void Player::PlayAnimation(int index, bool loop)
+void Player::InputCharge(float elapsedTime)
 {
-	animationPlaying = true;
-	animationLoop = loop;
-	animationIndex = index;
-	animationSeconds = 0.0f;
-}
+	//右クリック押している間向きをカーソルの方向にするやーつ
 
-void Player::PlayAnimation(const char* name, bool loop)
-{
-	int index = 0;
-	const std::vector<ModelResource::Animation>& animations = model->GetResource()->GetAnimations();
-	for (const ModelResource::Animation& animation : animations)
+	DirectX::XMFLOAT3 vec{};
+	if (KeyInput::Instance().GetKeyHold(VK_RBUTTON))
 	{
-		if (animation.name == name)
+		state = State::Charge;
+		DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(), 0);
+		DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(), 1.0f);
+
+		DirectX::XMFLOAT3 hitPosition;
+		DirectX::XMFLOAT3 hitNormal;
+
+		if (Hit::RayCast(curPosS, curPosE,
+			stage->GetTransform(),
+			stage->getModel(),
+			hitPosition, hitNormal))
 		{
-			PlayAnimation(index, loop);
-			return;
+			vec = {
+				hitPosition.x - position.x,
+				0.0f,
+				hitPosition.z - position.z
+			};
+
+			// 正規化
+			float len = sqrtf(vec.x * vec.x + vec.z * vec.z);
+			if (len != 0.0f)
+			{
+				vec.x /= len;
+				vec.z /= len;
+			}
+
+			rushVec = vec;
+
+			// 回転
+			float angles = atan2f(vec.x, vec.z);
+		
+			angle.y = angles;
+
+			chargeTime += elapsedTime;
 		}
-		++index;
+		chargestil = 0.5f;
+		col->SetIsCharge(true);
+		col->SetRadius(chargeTime * 1.0f);
+		col->SetAngle({ 0,0,0 });
 	}
-}
 
-
-// アニメーション更新処理
-void Player::UpdateAnimation(float elapsedTime)
-{
-	if (animationPlaying)
+	// 離した瞬間開放
+	if (KeyInput::Instance().GetKeyUp(VK_RBUTTON))
 	{
-		//アニメーション切り替え時のブレンド率を計算
-		float blendRate = 1.0f;
-		if (animationSeconds < animationBlendSecondsLength)
+		if (chargeTime > 2.5f)
 		{
-			blendRate = (animationSeconds / animationBlendSecondsLength);
+			chargeValue = 9.0f;
+		}
+		else if (chargeTime > 1.8f)
+		{
+			chargeValue = 6.0f;
+		}
+		else if (chargeTime > 1.0f)
+		{
+			chargeValue = 3.5f;
+		}
+		else if (chargeTime > 0.5f)
+		{
+			chargeValue = 2.0f;
+		}
+		else
+		{
+			chargeValue = 1.0f;
 		}
 
-		std::vector<Model::Node>& nodes = model->GetNodes();
-
-		//アニメーションを取得
-		const std::vector<ModelResource::Animation>& animations = model->GetResource()->GetAnimations();
-		const ModelResource::Animation& animation = animations.at(animationIndex);
-
-		animationSeconds += elapsedTime;
-
-		if (animationSeconds >= animation.secondsLength)
-		{
-			if (animationLoop)
-			{
-				animationSeconds = 0;
-			}
-			else
-			{
-				animationPlaying = false;
-			}
-		}
-
-		const std::vector<ModelResource::Keyframe>& keyframes = animation.keyframes;
-		int keyCount = static_cast<int>(keyframes.size());
-
-		for (int keyIndex = 0;keyIndex < keyCount - 1; ++keyIndex)
-		{
-			//現在の時間がどのキーフレームかを判定する
-			const ModelResource::Keyframe& keyframe0 = keyframes.at(keyIndex);
-			const ModelResource::Keyframe& keyframe1 = keyframes.at(keyIndex + 1);
-			if (animationSeconds >= keyframe0.seconds && animationSeconds < keyframe1.seconds)
-			{
-				//再生時間とキーフレームの時間から補完率を算出
-				float rate = ((animationSeconds - keyframe0.seconds) / (keyframe1.seconds - keyframe0.seconds));
-
-				//すべてのノードの姿勢を計算する
-				int nodeCount = static_cast<int>(nodes.size());
-				for (int nodeIndex = 0; nodeIndex < nodeCount;++nodeIndex)
-				{
-					const ModelResource::NodeKeyData& key0 = keyframe0.nodeKeys.at(nodeIndex);
-					const ModelResource::NodeKeyData& key1 = keyframe1.nodeKeys.at(nodeIndex);
-
-					//ノード取得
-					Model::Node& node = nodes[nodeIndex];
-
-					if (blendRate < 1.0f)
-					{
-						//現在と次の姿勢を補完
-						DirectX::XMVECTOR S0 = DirectX::XMLoadFloat3(&node.scale);
-						DirectX::XMVECTOR S1 = DirectX::XMLoadFloat3(&key1.scale);
-						DirectX::XMVECTOR R0 = DirectX::XMLoadFloat4(&node.rotate);
-						DirectX::XMVECTOR R1 = DirectX::XMLoadFloat4(&key1.rotate);
-						DirectX::XMVECTOR T0 = DirectX::XMLoadFloat3(&node.translate);
-						DirectX::XMVECTOR T1 = DirectX::XMLoadFloat3(&key1.translate);
-
-						DirectX::XMVECTOR S = DirectX::XMVectorLerp(S0, S1, blendRate);
-						DirectX::XMVECTOR R = DirectX::XMQuaternionSlerp(R0, R1, blendRate);
-						DirectX::XMVECTOR T = DirectX::XMVectorLerp(T0, T1, blendRate);
-
-						DirectX::XMStoreFloat3(&node.scale, S);
-						DirectX::XMStoreFloat4(&node.rotate, R);
-						DirectX::XMStoreFloat3(&node.translate, T);
-					}
-					else
-					{
-						//前のキーフレームと次のキーフレームの姿勢を補完
-						DirectX::XMVECTOR S0 = DirectX::XMLoadFloat3(&key0.scale);
-						DirectX::XMVECTOR S1 = DirectX::XMLoadFloat3(&key1.scale);
-						DirectX::XMVECTOR R0 = DirectX::XMLoadFloat4(&key0.rotate);
-						DirectX::XMVECTOR R1 = DirectX::XMLoadFloat4(&key1.rotate);
-						DirectX::XMVECTOR T0 = DirectX::XMLoadFloat3(&key0.translate);
-						DirectX::XMVECTOR T1 = DirectX::XMLoadFloat3(&key1.translate);
-
-						DirectX::XMVECTOR S = DirectX::XMVectorLerp(S0, S1, rate);
-						DirectX::XMVECTOR R = DirectX::XMQuaternionSlerp(R0, R1, rate);
-						DirectX::XMVECTOR T = DirectX::XMVectorLerp(T0, T1, rate);
-
-						DirectX::XMStoreFloat3(&node.scale, S);
-						DirectX::XMStoreFloat4(&node.rotate, R);
-						DirectX::XMStoreFloat3(&node.translate, T);
-					}
-				}
-			}
-		}
+		chargestil = 0.5f;
+		col->SetIsCharge(false);
+		col->SetIsAttack(true);
+		col->SetTimer(0.2f);
+		//PlayAnimation("Attack", false);
 	}
-	//行列更新
-	model->UpdateTransform();
 }
 
 void Player::MoveWithCollision(float elapsedTime,
 	float dx,
 	float dz,
 	const int(&maps)[38][38],
-	bool isRush 
+	float value 
 )
 {
 	constexpr float CELL = 2.0f;
 	constexpr int OFF_X = 19;
 	constexpr int OFF_Z = 19;
 	DirectX::XMFLOAT3 next = position;
-	if (isRush)
-	{
-		next.x += dx * elapsedTime * moveSpeed * 10;
-		next.z += dz * elapsedTime * moveSpeed * 10;
-	}
-	else
-	{
-		next.x += dx * elapsedTime * moveSpeed;
-		next.z += dz * elapsedTime * moveSpeed;
-	}
+
+	next.x += dx * elapsedTime * moveSpeed * value;
+	next.z += dz * elapsedTime * moveSpeed * value;
 
 	{
 		int nx = (int)std::floor(next.x / CELL) + OFF_X;
@@ -568,7 +584,7 @@ void Player::CollisionWeponVsEnemies()
 				damage = swordDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
 				break;
 			case Player::HaveWepon::Axe:
-				damage += AxeDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
+				damage += chargeValue * AxeDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
 				break;
 			case Player::HaveWepon::Spere:
 				damage += SpearDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
@@ -587,7 +603,7 @@ void Player::CollisionWeponVsEnemies()
 				riskAdd = 3; 
 				break;
 			case Player::HaveWepon::Axe:
-				riskAdd = 6;
+				riskAdd = 6 * chargeValue;
 				break;
 			case Player::HaveWepon::Spere:
 				riskAdd = 2;
@@ -651,6 +667,9 @@ void Player::DrawDebugGUI()
 		ImGui::DragInt("SwordRisk", &riskGauge[0]);
 		ImGui::DragInt("AxeRisk", &riskGauge[1]);
 		ImGui::DragInt("SpareRisk", &riskGauge[2]);
+
+		ImGui::InputFloat("Velocity", &moveVecX);
+		ImGui::InputFloat("Velocity", &moveVecZ);
 
 		ImGui::End();
 	}
