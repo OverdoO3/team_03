@@ -41,9 +41,4 @@ private:
 	int maps[38][38];
 
 	std::unique_ptr<CameraController> cameraController = nullptr;
-
-	DirectX::XMFLOAT3 testPos = { 720,320,1 };
-	float testAngle = 0;
-
-	std::unique_ptr<Sprite> test = nullptr;
 };

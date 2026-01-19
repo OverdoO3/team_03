@@ -209,7 +209,6 @@
     <ClInclude Include="..\team02_1\Source\DirectXCommon.h" />
     <ClInclude Include="..\team02_1\Source\KeyInput.h" />
     <ClInclude Include="..\team02_1\Source\Lerp.h" />
-    <ClInclude Include="..\team02_1\Source\NumberRender.h" />
     <ClInclude Include="External\imgui-docking\imconfig.h" />
     <ClInclude Include="External\imgui-docking\imgui.h" />
     <ClInclude Include="External\imgui-docking\imgui_impl_dx11.h" />
@@ -226,6 +225,8 @@
     <ClInclude Include="Source\Collision.h" />
     <ClInclude Include="Source\common.h" />
     <ClInclude Include="Source\CursorManager.h" />
+    <ClInclude Include="Source\DamageDraw.h" />
+    <ClInclude Include="Source\DamageDrawManager.h" />
     <ClInclude Include="Source\Effect.h" />
     <ClInclude Include="Source\EffectManager.h" />
     <ClInclude Include="Source\Enemy.h" />
@@ -239,6 +240,8 @@
     <ClInclude Include="Source\Node.h" />
     <ClInclude Include="Source\Obj.h" />
     <ClInclude Include="Source\Pathfinding.h" />
+    <ClInclude Include="Source\Plane.h" />
+    <ClInclude Include="Source\ScoreRender.h" />
     <ClInclude Include="Source\SpawnPoint.h" />
     <ClInclude Include="Source\SpecialAttack.h" />
     <ClInclude Include="Source\tower.h" />
@@ -295,6 +298,8 @@
     <ClCompile Include="Source\CameraController.cpp" />
     <ClCompile Include="Source\Character.cpp" />
     <ClCompile Include="Source\Collision.cpp" />
+    <ClCompile Include="Source\DamageDraw.cpp" />
+    <ClCompile Include="Source\DamageDrawManager.cpp" />
     <ClCompile Include="Source\Effect.cpp" />
     <ClCompile Include="Source\EffectManager.cpp" />
     <ClCompile Include="Source\Enemy.cpp" />
@@ -308,6 +313,7 @@
     <ClCompile Include="Source\Menu.cpp" />
     <ClCompile Include="Source\Obj.cpp" />
     <ClCompile Include="Source\Pathfinding.cpp" />
+    <ClCompile Include="Source\Plane.cpp" />
     <ClCompile Include="Source\SpawnPoint.cpp" />
     <ClCompile Include="Source\tower.cpp" />
     <ClCompile Include="Source\TrailMesh.cpp" />
@@ -352,6 +358,7 @@
     <None Include="Shader\PrimitiveRenderer.hlsli" />
     <None Include="Shader\Skinning.hlsli" />
     <None Include="Shader\Sprite.hlsli" />
+    <None Include="Source\Vertex3D.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BasicPS.hlsl">

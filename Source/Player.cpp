@@ -12,6 +12,8 @@
 #include "RayCast.h"
 #include "Screen.h"
 #include "KeyInput.h"
+#include "DamageDrawManager.h"
+
 
 void Player::Initialize()
 {
@@ -22,13 +24,17 @@ void Player::Initialize()
 	model = wepons[(int)nowWepon];
 	trailEffect= std::make_unique<Effect>("Data/Effect/trail_demo.efk");
 	WeponTrailEffect= std::make_unique<Effect>("Data/Effect/wepon.efk");
+	riskAura = std::make_unique<Effect>("Data/Effect/risk_aura/risk_aura.efk");
+	SpearDash = std::make_unique<Effect>("Data/Effect/spear_dash/spear_dash.efk");
 	hitSE.reset(Audio::Instance().LoadAudioSource("Data/Sound/Hit.wav"));
+
+	plane = std::make_unique<Plane>();
 
 	scale.x = scale.y = scale.z = 0.05f;
 	trailEffect->SetPosition(trailHandle, position);
 	trailHandle = trailEffect->Play({ 0,5.0f,0 }, 0.5f);
 
-	col = std::make_unique<Wepon>();
+	weponCol = std::make_unique<Wepon>();
 
 	position = { 5,3,3 };
 
@@ -52,7 +58,17 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 
 	trailEffect->SetPosition(trailHandle, position);
 
-	col->Update(elapsedTime);
+	riskAura->SetPosition(riskAuraHandle, position);
+
+	if (riskGauge[(int)nowWepon] > 75)
+	{
+		if (riskAuraHandle < 0)riskAuraHandle = riskAura->Play(position);
+	}
+	else
+	{
+		riskAura->Stop(riskAuraHandle);
+		riskAuraHandle = -1;
+	}
 
 	ChangeWepon();
 
@@ -119,7 +135,7 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 	{
 		avoidTimer -= elapsedTime;
 		MoveWithCollision(elapsedTime, avoidVec.x, avoidVec.z, maps, 5.0f);
-		col->SetIsAttack(false);
+		weponCol->SetIsAttack(false);
 		if (avoidTimer <= 0.0f)
 		{
 			velocity.x = 0;
@@ -161,7 +177,9 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 		MoveWithCollision(elapsedTime, dx, dz, maps, 10.0f);
 
 		rushTimer -= elapsedTime;
-		col->SetPosition(position);
+		SpearDash->SetPosition(SpearDashHandle, position);
+		weponCol->SetRadius(1.0f);
+
 		if (rushTimer <= 0.0f)
 		{
 			state = State::Idle;
@@ -180,12 +198,27 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 			chargeValue = 1.0f;
 			chargeTime = 0.0f;
 			chargestil = 1.0f;
-			col->SetRadius(1.0f);
+			weponCol->SetRadius(1.0f);
 			state = State::Idle;
 		}
 	}
-}
+	}
 
+	weponCol->Update(elapsedTime);
+	plane->SetType((int)nowWepon);
+	switch (nowWepon)
+	{
+	case Player::HaveWepon::Sword:
+		break;
+	case Player::HaveWepon::Axe:
+		plane->Update(elapsedTime, position, chargeTime, angle.y);
+		break;
+	case Player::HaveWepon::Spere:
+		plane->Update(elapsedTime, position, rushDist, angle.y);
+		break;
+	default:
+		break;
+	}
 	// トランスフォーム更
 	model->UpdateTransform();
 
@@ -199,29 +232,7 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 void Player::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
 	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);
-
-	for (auto& n : model->GetNodes())
-	{
-		if (strcmp(n.name, "kensaki") == 0&&col->GetIsAttack())
-		{
-			// モデル内部の transform
-			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4(&n.globalTransform);
-
-			// プレイヤーの world transform を XMMATRIX に変換
-			DirectX::XMMATRIX playerWorld = DirectX::XMLoadFloat4x4(&transform);
-
-			// ワールド座標 = プレイヤーのワールド行列 * ノードのグローバル行列
-			DirectX::XMMATRIX worldMat = local * playerWorld;
-
-			// 座標を抽出
-			WeponTipPos.x = worldMat.r[3].m128_f32[0];
-			WeponTipPos.y = worldMat.r[3].m128_f32[1];
-			WeponTipPos.z = worldMat.r[3].m128_f32[2];
-
-			// 軌跡発生
-			WeponTrailEffect->Play(WeponTipPos, 1.0f);
-		}
-	}
+	plane->Render(rc, renderer);
 }
 
 void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
@@ -229,7 +240,7 @@ void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* render
 	//基底クラスの関数呼び出し
 	Character::RenderDebugPrimitive(rc, renderer);
 
-	col->RenderDebugPrimitive(rc, renderer);
+	weponCol->RenderDebugPrimitive(rc, renderer);
 }
 
 void Player::InputAttack()
@@ -276,9 +287,10 @@ void Player::InputAttack()
 		pos.y = position.y + 0.8f;
 		pos.z = position.z;
 
-		col->SetPosition({ pos.x + dir.x ,pos.y + dir.y ,pos.z + dir.z });
-		col->SetIsAttack(true);
-		col->SetTimer(0.2f);
+		weponCol->SetPosition({ pos.x + dir.x ,pos.y + dir.y ,pos.z + dir.z });
+		weponCol->SetRadius(1.0f);
+		weponCol->SetIsAttack(true);
+		weponCol->SetTimer(0.2f);
 
 		state = State::Attack;
 		PlayAnimation("Attack", false);
@@ -288,7 +300,7 @@ void Player::InputAttack()
 		//WeponTrailEffect->Play(p, 1.0f);
 		DirectX::XMFLOAT3 a = angle;
 		a.x = DirectX::XM_PI / 2;
-		col->SetAngle(a);
+		weponCol->SetAngle(a);
 	}
 }
 
@@ -341,8 +353,11 @@ void Player::InputRush(float elapsedTime, const int(&maps)[38][38])
 			float angles = atan2f(vec.x, vec.z);
 			angle.y = angles;
 		}
-		moveSpeed = 2.0f;
 		rushDist += elapsedTime;
+		if (rushDistMax < rushDist)
+		{
+			rushDist = rushDistMax;
+		}
 
 		isChargeRush = true;
 	}
@@ -352,10 +367,14 @@ void Player::InputRush(float elapsedTime, const int(&maps)[38][38])
 	{
 		state = State::Rush;
 		rushTimer = rushTime * rushDist;
-		moveSpeed = 5.0f;
+		rushTimer /= 2;
 		isChargeRush = false;
-		col->SetIsAttack(true);
-		col->SetTimer(rushTimer);
+		weponCol->SetIsAttack(true);
+		weponCol->SetTimer(rushTimer);
+
+		SpearDashHandle = SpearDash->Play(position);
+		SpearDash->SetAngle(SpearDashHandle, angle);
+		SpearDash->SetScale(SpearDashHandle, { rushDist * 0.5f,1.0f,1.0f });
 		//PlayAnimation("Attack", false);
 	}
 }
@@ -403,9 +422,9 @@ void Player::InputCharge(float elapsedTime)
 			chargeTime += elapsedTime;
 		}
 		chargestil = 0.5f;
-		col->SetIsCharge(true);
-		col->SetRadius(chargeTime * 1.0f);
-		col->SetAngle({ 0,0,0 });
+		weponCol->SetIsCharge(true);
+		weponCol->SetRadius(chargeTime * 1.0f);
+		weponCol->SetAngle({ 0,0,0 });
 	}
 
 	// 離した瞬間開放
@@ -433,9 +452,9 @@ void Player::InputCharge(float elapsedTime)
 		}
 
 		chargestil = 0.5f;
-		col->SetIsCharge(false);
-		col->SetIsAttack(true);
-		col->SetTimer(0.2f);
+		weponCol->SetIsCharge(false);
+		weponCol->SetIsAttack(true);
+		weponCol->SetTimer(0.2f);
 		//PlayAnimation("Attack", false);
 	}
 }
@@ -471,7 +490,7 @@ void Player::MoveWithCollision(float elapsedTime,
 			position.z = next.z;
 	}
 
-	col->SetPosition(position);
+	weponCol->SetPosition(position);
 }
 
 void Player::ChangeWepon()
@@ -559,7 +578,7 @@ void Player::CollisionWeponVsEnemies()
 {
 	EnemyManager& enemyManager = EnemyManager::Instance();
 
-	bool attacking = col->GetIsAttack();
+	bool attacking = weponCol->GetIsAttack();
 
 	int enemyCount = enemyManager.GetEnemyCount();
 	for (int j = 0; j < enemyCount; ++j)
@@ -587,13 +606,33 @@ void Player::CollisionWeponVsEnemies()
 				damage += chargeValue * AxeDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
 				break;
 			case Player::HaveWepon::Spere:
-				damage += SpearDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
+				damage += SpearDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 3.0f);
 				break;
 			default:
 				break;
 			}
+			// スクリーンサイズ取得
+			float screenWidth = Graphics::Instance().GetScreenWidth();
+			float screenHeight = Graphics::Instance().GetScreenHeight();
+
+			DirectX::XMMATRIX View = DirectX::XMLoadFloat4x4(&Camera::Instance().GetView());
+			DirectX::XMMATRIX Projection = DirectX::XMLoadFloat4x4(&Camera::Instance().GetProjection());
+			DirectX::XMMATRIX World = DirectX::XMMatrixIdentity();
+
+			DirectX::XMVECTOR a = DirectX::XMLoadFloat3(&enemy->GetPosition());
+			DirectX::XMVECTOR ScreenPosition = DirectX::XMVector3Project(a,
+				0, 0, screenWidth, screenHeight,
+				0, 1.0f, Projection, View, World);
+
+			DirectX::XMFLOAT2 screenPosition;
+			DirectX::XMStoreFloat2(&screenPosition, ScreenPosition);
+
+			DamegeDrawManager::Instance().makeTexts(damage, screenPosition, 0.4f, { 1,1,1,1 }, 0.4f);
+
 			enemy->ApplyDamage(damage, 0.0f);
 			enemy->PlayHitEffect();
+
+			
 
 			int riskAdd = 0;
 
@@ -641,7 +680,6 @@ void Player::CollisionPlyerVsEnemies()
 			if (position.y > enemy->GetPosition().y)
 			{
 				velocity.y = 6;
-				enemy->ApplyDamage(1, 0.5f);
 			}
 			else
 			{
@@ -660,16 +698,16 @@ void Player::DrawDebugGUI()
 	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 	{
 		ImGui::DragInt("HP", &health);
+		ImGui::InputFloat("Angle", &angle.y);
 
 		int b = (int)nowWepon;
-		ImGui::DragInt("wepon", &b);
+		ImGui::InputInt("wepon", &b);
+
+		ImGui::DragFloat("rushDist", &rushDist);
 
 		ImGui::DragInt("SwordRisk", &riskGauge[0]);
 		ImGui::DragInt("AxeRisk", &riskGauge[1]);
 		ImGui::DragInt("SpareRisk", &riskGauge[2]);
-
-		ImGui::InputFloat("Velocity", &moveVecX);
-		ImGui::InputFloat("Velocity", &moveVecZ);
 
 		ImGui::End();
 	}

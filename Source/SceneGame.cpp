@@ -9,19 +9,16 @@
 #include "SceneManager.h"
 #include "SceneLoading.h"
 #include "SceneTitle.h"
+#include "DamageDrawManager.h"
 
 using json = nlohmann::json;
 // 初期化
 void SceneGame::Initialize()
 {
-	test = std::make_unique<Sprite>("Data/Sprite/yazirusi.png");
 	stage = std::make_unique<Stage>();
 	pathfinding = std::make_unique<Pathfinding>();
 	pathfinding->Initialize(stage.get());
 	Player::Instance().Initialize();
-	//WaveManager::Instance().MakeSpawnPoint({ 15,0,0 }, 0);
-
-	//WaveManager::Instance().MakeSpawnPoint({ 0,0,15 }, 1);
 
 	dummy = new EnemyMelee(stage.get(), pathfinding.get());
 	dummy->InitializeEnemy(stage.get(), pathfinding.get());
@@ -97,6 +94,8 @@ void SceneGame::Update(float elapsedTime)
 
 	WaveManager::Instance().Update(elapsedTime, stage.get(), pathfinding.get());
 
+	DamegeDrawManager::Instance().Update(elapsedTime);
+
 	/*if (gameTimer > 3.0f)
 	{
 		gameTimer = 0.0f;
@@ -128,10 +127,8 @@ void SceneGame::Render()
 
 	// 3Dモデル描画
 	{
-		//player->Render(rc, modelRenderer);
 		//ステージ描画
 		stage->Render(rc, modelRenderer);
-		test->Render(rc, testPos.x, testPos.y, 1, 100, 100, testAngle, 1, 1, 1, 1);
 		Player::Instance().Render(rc, modelRenderer);
 		EnemyManager::Instance().Render(rc,modelRenderer);
 		EffectManager::Instance().Render(rc.view, rc.projection);
@@ -139,7 +136,6 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
-		//player->RenderDebugPrimitive(rc, shapeRenderer);
 		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
 		//エネミーデバッグプリミティブ
 		EnemyManager::Instance().RenderDebugPrimitive(rc,shapeRenderer);
@@ -151,7 +147,7 @@ void SceneGame::Render()
 
 	// 2Dスプライト描画
 	{
-
+		DamegeDrawManager::Instance().Render(rc);
 	}
 }
 
@@ -165,11 +161,4 @@ void SceneGame::DrawGUI()
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 200), ImGuiCond_Once);
 	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 	WaveManager::Instance().DebugGUI();
-
-	if (ImGui::Begin("TEST", nullptr, ImGuiWindowFlags_None))
-	{
-		ImGui::InputFloat3("pos", &testPos.x);
-		ImGui::InputFloat("angle", &testAngle);
-		ImGui::End();
-	}
 }

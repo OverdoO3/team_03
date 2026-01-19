@@ -17,6 +17,8 @@ public:
 
 	void SetScale(Effekseer::Handle handle, const DirectX::XMFLOAT3& scale);
 
+	void SetAngle(Effekseer::Handle handle, const DirectX::XMFLOAT3& angle);
+
 private:
 	Effekseer::EffectRef effekseerEffect;
 };

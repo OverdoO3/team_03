@@ -46,4 +46,11 @@ void Effect::SetScale(Effekseer::Handle handle, const DirectX::XMFLOAT3& scale)
 	effekseerManager->SetScale(handle, scale.x, scale.y, scale.z);
 }
 
+void Effect::SetAngle(Effekseer::Handle handle, const DirectX::XMFLOAT3& angle)
+{
+	Effekseer::ManagerRef effekseerManager = EffectManager::Instance().GetEffekseerManager();
+
+	effekseerManager->SetRotation(handle, angle.x, angle.y - 80, angle.z);
+}
+
 

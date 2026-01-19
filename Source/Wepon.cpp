@@ -30,9 +30,13 @@ void Wepon::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* rendere
 	{
 		renderer->RenderCapsule(rc, transform, radius, 1, { 1,0,0,1 });
 	}
-
-	if (isCharge)
+	else if (isCharge)
 	{
 		renderer->RenderCapsule(rc, transform, radius, 1, { 0,0,1,1 });
 	}
+	else
+	{
+		renderer->RenderCapsule(rc, transform, radius, 1, { 1,1,1,1 });
+	}
+
 }

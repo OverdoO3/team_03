@@ -21,6 +21,21 @@ public:
 		DirectX::XMFLOAT2	texcoord;
 	};
 
+	struct SpriteVertex3D
+	{
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT2 texcoord;
+		DirectX::XMFLOAT4 color;
+	};
+
+	struct Sprite3DConstants
+	{
+		DirectX::XMMATRIX world;
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX projection;
+	};
+
+
 	// 描画実行
 	void Render(const RenderContext& rc,
 		float dx, float dy,					// 左上位置
@@ -29,7 +44,8 @@ public:
 		float sx, float sy,					// 画像切り抜き位置
 		float sw, float sh,					// 画像切り抜きサイズ
 		float angle,						// 角度
-		float r, float g, float b, float a	// 色
+		float r, float g, float b, float a,	// 色
+		float pivotX = 0.5f, float pivotY = 0.5f // 頂点
 	) const;
 
 	// 描画実行（テクスチャ切り抜き指定なし）

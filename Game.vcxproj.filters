@@ -231,9 +231,6 @@
     <ClInclude Include="..\team02_1\Source\Lerp.h">
       <Filter>Source\Common\Lerp</Filter>
     </ClInclude>
-    <ClInclude Include="..\team02_1\Source\NumberRender.h">
-      <Filter>Source\misc</Filter>
-    </ClInclude>
     <ClInclude Include="Source\CursorManager.h">
       <Filter>Source\Common\Cursol</Filter>
     </ClInclude>
@@ -296,6 +293,18 @@
     </ClInclude>
     <ClInclude Include="Source\EnemyWepon.h">
       <Filter>Source\Chara</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Plane.h">
+      <Filter>Source\Chara</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ScoreRender.h">
+      <Filter>Source\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DamageDraw.h">
+      <Filter>Source\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DamageDrawManager.h">
+      <Filter>Source\misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -477,7 +486,16 @@
       <Filter>Source\Chara</Filter>
     </ClCompile>
     <ClCompile Include="Source\EnemyWepon.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\Chara</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Plane.cpp">
+      <Filter>Source\Chara</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DamageDraw.cpp">
+      <Filter>Source\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DamageDrawManager.cpp">
+      <Filter>Source\misc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -500,6 +518,9 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="Shader\Scene.hlsli">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="Source\Vertex3D.hlsli">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>

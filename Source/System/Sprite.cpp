@@ -93,7 +93,8 @@ void Sprite::Render(const RenderContext& rc,
 	float sx, float sy,					// 画像切り抜き位置
 	float sw, float sh,					// 画像切り抜きサイズ
 	float angle,						// 角度
-	float r, float g, float b, float a	// 色
+	float r, float g, float b, float a,	// 色
+	float pivotX, float pivotY         // 頂点
 	) const
 {
 	ID3D11DeviceContext* dc = rc.deviceContext;
@@ -116,8 +117,8 @@ void Sprite::Render(const RenderContext& rc,
 
 	// スプライトの中心で回転させるために４頂点の中心位置が
 	// 原点(0, 0)になるように一旦頂点を移動させる。
-	float mx = dx + dw * 0.5f;
-	float my = dy + dh * 0.5f;
+	float mx = dx + dw * pivotX;
+	float my = dy + dh * pivotY;
 	for (auto& p : positions)
 	{
 		p.x -= mx;
@@ -215,3 +216,5 @@ void Sprite::Render(const RenderContext& rc,
 {
 	Render(rc, dx, dy, dz, dw, dh, 0, 0, textureWidth, textureHeight, angle, r, g, b, a);
 }
+
+

@@ -6,6 +6,7 @@
 #include "System/AudioSource.h"
 #include "Stage.h"
 #include "Wepon.h"
+#include "Plane.h"
 
 //ÉvÉåÉCÉÑÅ[
 class Player : public Character
@@ -57,8 +58,18 @@ private:
 	std::unique_ptr<Effect> WeponTrailEffect = nullptr;
 	Effekseer::Handle trailHandle = -1;
 
+	std::unique_ptr<Effect> riskAura = nullptr;
+	Effekseer::Handle riskAuraHandle = -1;
+
+	std::unique_ptr<Effect> SpearDash = nullptr;
+	Effekseer::Handle SpearDashHandle = -1;
+
+	std::unique_ptr<Plane>plane = nullptr;
+
+	float testAngle = 0;
+
 	std::unique_ptr<AudioSource> hitSE = nullptr;
-	std::unique_ptr<Wepon> col = nullptr;
+	std::unique_ptr<Wepon> weponCol = nullptr;
 	std::shared_ptr<Model> wepons[3];
 	int riskGauge[3] = {0,0,0};
 
@@ -69,11 +80,12 @@ private:
 	float avoidTimer = 0.0f;
 	DirectX::XMFLOAT3 avoidVec = { 0,0,0 };
 
-	float rushSpeed = 14.0f;
+	float rushSpeed = 200.0f;
 	DirectX::XMFLOAT3 rushVec = { 0,0,0 };
 	float rushTimer = 0.0f;
-	float rushTime = 0.2f;
+	float rushTime = 0.1f;
 	float rushDist = 0.0f;
+	float rushDistMax = 1.5f;
 	bool isChargeRush;
 
 	float chargeTime = 0.0f;
