@@ -5,7 +5,9 @@
 
 void SceneLoading::Initialize()
 {
+
 	sprite = std::make_unique<Sprite>("Data/Sprite/LoadingIcon.png");
+	spr = std::make_unique<Sprite>("Data/Sprite/game_result_backgraund_2.png");
 
 	thread = new std::thread(&SceneLoading::LoadingThread, this);
 }
@@ -55,6 +57,15 @@ void SceneLoading::Render()
 			positionX, positionY, 0, spriteWidth, spriteHeight,
 			angle,
 			1, 1, 1, 1);
+		for (int i = 0;i < 5;++i)
+		{
+			spr->Render(rc,
+				-40, -460, 0, 2000, 2000, 2000*i, 0, 2000, 2000,
+				angle * (0.2+0.3*i),
+				1, 1, 1, 1);
+			
+		}
+		
 	}
 }
 

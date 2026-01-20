@@ -9,6 +9,8 @@ void SceneTitle::Initialize()
 {
 	//スプライト初期化
 	sprite = std::make_unique<Sprite>("Data/Sprite/Title.png");
+	sprUI = std::make_unique<Sprite>("Data/Sprite/title_UI.png");
+
 }
 
 void SceneTitle::Finalize()
@@ -29,6 +31,21 @@ void SceneTitle::Update(float elapsedTime)
 	{
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
 	}
+	Mouse& mouse = Input::Instance().GetMouse();
+	mousec = 0;
+	if (mouse.GetOldPositionX() > 730 && mouse.GetOldPositionX() < 1130)
+	{
+		if (mouse.GetOldPositionY() > 400 && mouse.GetOldPositionY() < 500)
+		{
+			mousec = 1;
+		}
+		if (mouse.GetOldPositionY() > 600 && mouse.GetOldPositionY() < 700)
+		{
+			mousec = 2;
+		}
+	}
+	
+
 }
 
 void SceneTitle::Render()
@@ -50,6 +67,9 @@ void SceneTitle::Render()
 			0, 0, 0, screenWidth, screenHeight,
 			0,
 			1, 1, 1, 1);
+		sprUI->Render(rc, 730, 400, 0, 400, 100, 800-800 * (mousec % 2), 0, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 600, 0, 400, 100, 800-800 * ( mousec/2), 200, 800, 200, 0, 1, 1, 1, 1);
+
 	}
 }
 
