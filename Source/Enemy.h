@@ -15,14 +15,13 @@ using namespace DirectX;
 class Enemy : public Character
 {
 public:
-
 	Enemy() {}
 	~Enemy() override {}
 
-	virtual void Update(float elapsedTime,Tower& tower) = 0;
+	virtual void Update(float elapsedTime) = 0;
 
 	void InitializeEnemy(Stage* map, Pathfinding* pf);
-	virtual void UpdateEnemy(float dt,Tower& tower);
+	virtual void UpdateEnemy(float dt,Tower* tower);
 
 	//îjä¸
 	void Destroy();
@@ -62,6 +61,9 @@ public:
 
 	bool target = true;
 
+	void SetTarget(Tower* tower) { targetTower = tower; }
+	Tower* GetTarget() const { return targetTower; }
+
 	enum class EnemyType
 	{
 		Melee,  //ãﬂê⁄
@@ -91,7 +93,7 @@ protected:
 	bool ready = false;
 
 	float meleeAttackSearchRange = 7.0f;
-	float meleeAttackCanRange = 1.2f;
+	float meleeAttackCanRange = 2.5f;
 
 	float rangedAttackSearchRange = 8.0f;
 	float rangedAttackCanRange = 8.0f;
@@ -99,4 +101,6 @@ protected:
 	std::vector<Node*> debugPath;
 
 	EnemyType type;
+
+	Tower* targetTower;
 };

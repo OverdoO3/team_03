@@ -13,40 +13,41 @@
 #include "Screen.h"
 #include "KeyInput.h"
 #include "DamageDrawManager.h"
-
+#include "DirectXCommon.h"
 
 void Player::Initialize()
 {
-	wepons[0] = std::make_unique<Model>("Data/Model/Player/sword_character.mdl");
-	wepons[1] = std::make_unique<Model>("Data/Model/Player/axe_character.mdl");
-	wepons[2] = std::make_unique<Model>("Data/Model/Player/spear_character.mdl");
+	wepons[0] = std::make_unique<Model>("Data/Model/Player/sword_model.mdl");
+	wepons[1] = std::make_unique<Model>("Data/Model/Player/axe_model.mdl");
+	wepons[2] = std::make_unique<Model>("Data/Model/Player/spear_model.mdl");
 
 	model = wepons[(int)nowWepon];
-	trailEffect= std::make_unique<Effect>("Data/Effect/trail_demo.efk");
 	WeponTrailEffect= std::make_unique<Effect>("Data/Effect/wepon.efk");
 	riskAura = std::make_unique<Effect>("Data/Effect/risk_aura/risk_aura.efk");
 	SpearDash = std::make_unique<Effect>("Data/Effect/spear_dash/spear_dash.efk");
 	hitSE.reset(Audio::Instance().LoadAudioSource("Data/Sound/Hit.wav"));
 
+	dirModel = std::make_unique<Model>("Data/Model/Player/yazirushi.mdl");
+
 	plane = std::make_unique<Plane>();
 
-	scale.x = scale.y = scale.z = 0.05f;
-	trailEffect->SetPosition(trailHandle, position);
-	trailHandle = trailEffect->Play({ 0,5.0f,0 }, 0.5f);
+	scale.x = scale.y = scale.z = 0.012f;
 
 	weponCol = std::make_unique<Wepon>();
 
 	position = { 5,3,3 };
 
+	health = 100;
+
 	state = State::Idle;
-	PlayAnimation("Idle", true);
+	PlayAnimation("idle", true);
 }
 
 void Player::Finalize()
 {
 }
 
-void Player::Update(float elapsedTime, const int(&maps)[38][38])
+void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 {
 	UpdateVelocity(elapsedTime);
 
@@ -55,8 +56,6 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 	//InputMove(elapsedTime);
 
 	CollisionWeponVsEnemies();
-
-	trailEffect->SetPosition(trailHandle, position);
 
 	riskAura->SetPosition(riskAuraHandle, position);
 
@@ -81,9 +80,10 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 			if (InputMove(elapsedTime, maps))
 			{
 				state = State::Run;
-				PlayAnimation("Running", true);
+				PlayAnimation("walk", true);
 			}
 		}
+
 		switch (nowWepon)
 		{
 		case HaveWepon::Axe:
@@ -103,13 +103,10 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 	}
 	case State::Run:
 	{
-		if (!isChargeRush)
+		if (!InputMove(elapsedTime, maps))
 		{
-			if (InputMove(elapsedTime, maps))
-			{
-				state = State::Idle;
-				PlayAnimation("Idle", true);
-			}
+			state = State::Idle;
+			PlayAnimation("idle", true);
 		}
 
 		switch (nowWepon)
@@ -145,6 +142,7 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 			chargestil = 1.0f;
 			
 			state = State::Idle;
+			PlayAnimation("idle", true);
 		}
 		break;
 	}
@@ -154,16 +152,17 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 		if (!animationPlaying)
 		{
 			state = State::Idle;
-			PlayAnimation("Idle", true);
+			PlayAnimation("idle", true);
 			break;
 		}
-		InputAttack();
-		InputRush(elapsedTime, maps);
 		if (InputMove(elapsedTime, maps))
 		{
 			state = State::Run;
-			PlayAnimation("Running", true);
+			PlayAnimation("walk", true);
 		}
+		InputAttack();
+		InputRush(elapsedTime, maps);
+		
 		moveSpeed = 2.0f;
 		break;
 	}
@@ -183,7 +182,8 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 		if (rushTimer <= 0.0f)
 		{
 			state = State::Idle;
-			PlayAnimation("Idle", true);
+			PlayAnimation("idle", true);
+
 			rushDist = 0.0f;
 		}
 		break;
@@ -227,11 +227,14 @@ void Player::Update(float elapsedTime, const int(&maps)[38][38])
 	UpdateAnimation(elapsedTime);
 
 	invincibleTime -= elapsedTime;
+
+	prevState = state;
 }
 
 void Player::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
 	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);
+	renderer->Render(rc, transform, dirModel.get(), ShaderId::Lambert);
 	plane->Render(rc, renderer);
 }
 
@@ -293,7 +296,7 @@ void Player::InputAttack()
 		weponCol->SetTimer(0.2f);
 
 		state = State::Attack;
-		PlayAnimation("Attack", false);
+		PlayAnimation("attack", false);
 
 		DirectX::XMFLOAT3 p = position;
 		p.y = position.y + 1.0f;
@@ -311,11 +314,11 @@ void Player::InputAvoid()
 		avoidTimer = 0.2f;
 		state = State::Avoid;
 		avoidVec = GetMoveVec();
-		//PlayAnimation("Avoid", false);
+		PlayAnimation("step", false);
 	}
 }
 
-void Player::InputRush(float elapsedTime, const int(&maps)[38][38])
+void Player::InputRush(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 {
 	//右クリック押している間向きをカーソルの方向にするやーつ
 
@@ -373,9 +376,11 @@ void Player::InputRush(float elapsedTime, const int(&maps)[38][38])
 		weponCol->SetTimer(rushTimer);
 
 		SpearDashHandle = SpearDash->Play(position);
-		SpearDash->SetAngle(SpearDashHandle, angle);
+		DirectX::XMFLOAT3 ang = angle;
+		ang.y -= DirectX::XM_PI;
+		SpearDash->SetAngle(SpearDashHandle, ang);
 		SpearDash->SetScale(SpearDashHandle, { rushDist * 0.5f,1.0f,1.0f });
-		//PlayAnimation("Attack", false);
+		PlayAnimation("Attack", false);
 	}
 }
 
@@ -455,20 +460,19 @@ void Player::InputCharge(float elapsedTime)
 		weponCol->SetIsCharge(false);
 		weponCol->SetIsAttack(true);
 		weponCol->SetTimer(0.2f);
-		//PlayAnimation("Attack", false);
+		PlayAnimation("attack", false);
 	}
 }
 
 void Player::MoveWithCollision(float elapsedTime,
 	float dx,
 	float dz,
-	const int(&maps)[38][38],
-	float value 
-)
+	const int(&maps)[WIDTH][HEIGHT],
+	float value)
 {
 	constexpr float CELL = 2.0f;
-	constexpr int OFF_X = 19;
-	constexpr int OFF_Z = 19;
+	constexpr int OFF_X = WIDTH / 2;
+	constexpr int OFF_Z = HEIGHT / 2;
 	DirectX::XMFLOAT3 next = position;
 
 	next.x += dx * elapsedTime * moveSpeed * value;
@@ -513,7 +517,7 @@ void Player::ChangeWepon()
 	KeyInput::Instance().Update();
 }
 
-bool Player::InputMove(float elapsedTime,const int(&maps)[38][38])
+bool Player::InputMove(float elapsedTime,const int(&maps)[WIDTH][HEIGHT])
 {
 	DirectX::XMFLOAT3 moveVec = GetMoveVec();
 
@@ -600,7 +604,7 @@ void Player::CollisionWeponVsEnemies()
 			switch (nowWepon)
 			{
 			case Player::HaveWepon::Sword:
-				damage = swordDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
+				damage += swordDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
 				break;
 			case Player::HaveWepon::Axe:
 				damage += chargeValue * AxeDamage * (1.0f + (riskGauge[(int)nowWepon] / 100.0f) * 1.2f);
@@ -611,6 +615,8 @@ void Player::CollisionWeponVsEnemies()
 			default:
 				break;
 			}
+
+			damage += rand() % 5;
 			// スクリーンサイズ取得
 			float screenWidth = Graphics::Instance().GetScreenWidth();
 			float screenHeight = Graphics::Instance().GetScreenHeight();
@@ -631,8 +637,6 @@ void Player::CollisionWeponVsEnemies()
 
 			enemy->ApplyDamage(damage, 0.0f);
 			enemy->PlayHitEffect();
-
-			
 
 			int riskAdd = 0;
 
@@ -704,6 +708,9 @@ void Player::DrawDebugGUI()
 		ImGui::InputInt("wepon", &b);
 
 		ImGui::DragFloat("rushDist", &rushDist);
+
+		int a = (int)state;
+		ImGui::InputInt("State", &a);
 
 		ImGui::DragInt("SwordRisk", &riskGauge[0]);
 		ImGui::DragInt("AxeRisk", &riskGauge[1]);

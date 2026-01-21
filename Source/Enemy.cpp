@@ -10,7 +10,7 @@ void Enemy::InitializeEnemy(Stage* map, Pathfinding* pf)
 	assert(pathfinding);
 }
 
-void Enemy::UpdateEnemy(float dt,Tower& tower)
+void Enemy::UpdateEnemy(float dt,Tower* tower)
 {
 	if (!ready)return;
 	pathTimer += dt;
@@ -29,7 +29,7 @@ void Enemy::UpdateEnemy(float dt,Tower& tower)
 		}
 		else
 		{
-			targetPos = tower.GetPosition();
+			targetPos = tower->GetPosition();
 			target = false;
 		}
 	}
@@ -42,7 +42,7 @@ void Enemy::UpdateEnemy(float dt,Tower& tower)
 		}
 		else
 		{
-			targetPos = tower.GetPosition();
+			targetPos = tower->GetPosition();
 			target = false;
 		}
 	}

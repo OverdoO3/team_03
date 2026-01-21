@@ -4,6 +4,17 @@
 
 void CameraController::Update(float elapsedTime)
 {
+	if (manualEye)
+	{
+		// Œü‚«‚ÍˆÛAEye ‚¾‚¯g‚¤
+		Camera::Instance().SetLookAt(
+			eye,
+			target,
+			DirectX::XMFLOAT3(0, 1, 0)
+		);
+		return;
+	}
+
 	GamePad& gamePad = Input::Instance().GetGamePad();
 	float ax = gamePad.GetAxisRX();
 	float ay = gamePad.GetAxisRY();

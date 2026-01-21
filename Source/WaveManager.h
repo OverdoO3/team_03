@@ -25,10 +25,15 @@ public:
 
 	void DebugGUI();
 
+	int GetWaveCount() { return currentWave; }
 private:
 	std::vector<SpawnPoint::SpawnInfo> spawns = {
-		{Enemy::EnemyType::Melee,3,2.0f},
 		{Enemy::EnemyType::Ranged,3,2.0f},
+		{Enemy::EnemyType::Melee,3,2.0f},
+		{Enemy::EnemyType::Melee,3,2.0f},
+		{Enemy::EnemyType::Melee,3,2.0f},
+		{Enemy::EnemyType::Melee,3,2.0f},
+		{Enemy::EnemyType::Melee,3,2.0f},
 		{Enemy::EnemyType::Melee,3,2.0f}
 	};
 	float startDelay;

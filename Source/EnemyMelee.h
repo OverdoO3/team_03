@@ -8,13 +8,13 @@
 class EnemyMelee : public Enemy
 {
 public:
-	std::unique_ptr<Effect> hitEffect;
+	std::shared_ptr<Effect> hitEffect;
 	Effekseer::Handle hitHandle = -1;
 public:
-	EnemyMelee(Stage* map, Pathfinding* pf);
+	EnemyMelee(Stage* map, Pathfinding* pf,std::shared_ptr<Model> mod,std::shared_ptr<Effect> hiteff);
 	~EnemyMelee() override;
 
-	void Update(float elapsedTime,Tower& tower) override;
+	void Update(float elapsedTime) override;
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer)override;
 
@@ -37,6 +37,8 @@ private:
 		Attack
 	};
 	State state = State::Wander;
+
+	std::shared_ptr<Model> nowModel = nullptr;
 
 	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
 	float moveSpeed = 2.0f;

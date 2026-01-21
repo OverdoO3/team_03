@@ -50,7 +50,7 @@ void Effect::SetAngle(Effekseer::Handle handle, const DirectX::XMFLOAT3& angle)
 {
 	Effekseer::ManagerRef effekseerManager = EffectManager::Instance().GetEffekseerManager();
 
-	effekseerManager->SetRotation(handle, angle.x, angle.y - 80, angle.z);
+	effekseerManager->SetRotation(handle, angle.x, angle.y - DirectX::XM_PIDIV2, angle.z);
 }
 
 

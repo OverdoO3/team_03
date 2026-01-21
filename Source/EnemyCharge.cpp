@@ -1,9 +1,13 @@
 #include "EnemyCharge.h"
+#include "DirectXCommon.h"
 
-EnemyCharge::EnemyCharge(Stage* map, Pathfinding* pf)
+EnemyCharge::EnemyCharge(Stage* map, Pathfinding* pf, std::shared_ptr<Model> mod, std::shared_ptr<Effect> hiteff,std::shared_ptr<Effect> beameff)
 {
-	hitEffect = std::make_unique<Effect>("Data/Effect/hit.efk");
-	model = std::make_unique<Model>("Data/Model/Enemy/medium_enemy.mdl");
+	model = mod;
+
+	hitEffect = hiteff;
+	beamEffect = beameff;
+	plane = std::make_unique<Plane>();
 
 	InitializeEnemy(map, pf);
 
@@ -17,40 +21,74 @@ EnemyCharge::EnemyCharge(Stage* map, Pathfinding* pf)
 
 	UpdateTransform();
 
-	model->UpdateTransform();
+	plane->SetType(3);
 }
 
 EnemyCharge::~EnemyCharge()
 {
 }
 
-void EnemyCharge::Update(float elapsedTime, Tower& tower)
+void EnemyCharge::Update(float elapsedTime)
 {
-
 	float dx = Player::Instance().GetPosition().x - position.x;
 	float dz = Player::Instance().GetPosition().z - position.z;
 	float dist = sqrtf(dx * dx + dz * dz);
 
-	float tdx = tower.GetPosition().x - position.x;
-	float tdz = tower.GetPosition().z - position.z;
+	if (!targetTower)return;
+	float tdx = targetTower->GetPosition().x - position.x;
+	float tdz = targetTower->GetPosition().z - position.z;
 	float tdist = sqrtf(tdx * tdx + tdz * tdz);
+
+	plane->Update(elapsedTime, position, 10, angle.y);
 
 	switch (state)
 	{
 	case EnemyCharge::State::Wander:
-		UpdateEnemy(elapsedTime, tower);
 
+		UpdateEnemy(elapsedTime, targetTower);
 		if (dist < rangedAttackCanRange || tdist < rangedAttackCanRange)
 		{
-			state = State::Attack;
+			state = State::Charge;
 			stateTimer = 1.0f;
+			beamHandle = -1;
 		}
 		break;
 	case EnemyCharge::State::Charge:
+		stateTimer -= elapsedTime;
+		if (beamHandle == -1)
+		{
+			beamHandle = beamEffect->Play(position);
 
+			if (target)
+			{
+				targetPosition = Player::Instance().GetPosition();
+			}
+			else
+			{
+				targetPosition = targetTower->GetPosition();
+			}
+
+			float dx = targetPosition.x - position.x;
+			float dz = targetPosition.z - position.z;
+			angle.y = atan2f(dx, dz);
+
+			DirectX::XMFLOAT3 effAngle = angle;
+			effAngle.y -= DirectX::XM_PIDIV2;
+	
+			beamEffect->SetAngle(beamHandle, effAngle);
+		}
+
+		if (stateTimer < 0)
+		{
+			state = State::Attack;
+			stateTimer = 2.0f;
+			canDamage = true;
+		}
+		break;
 	case EnemyCharge::State::Attack:
-		UpdateAttackState(elapsedTime, tower);
-		if (dist > rangedAttackCanRange && tdist > rangedAttackCanRange && stateTimer <= 0.0f)
+		UpdateAttackState(elapsedTime, *targetTower);
+		stateTimer -= elapsedTime;
+		if (stateTimer < 0.0f)
 		{
 			state = State::Wander;
 		}
@@ -69,6 +107,11 @@ void EnemyCharge::Update(float elapsedTime, Tower& tower)
 void EnemyCharge::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
 	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);
+
+	if (state == State::Charge)
+	{
+		plane->Render(rc, renderer);
+	}
 
 	DrawDebugGUI();
 }
@@ -98,6 +141,7 @@ void EnemyCharge::SetWanderState()
 	state = State::Wander;
 }
 
+
 void EnemyCharge::SetAttackState()
 {
 	state = State::Attack;
@@ -117,24 +161,58 @@ void EnemyCharge::UpdateAttackState(float elapsedTime, Tower& tower)
 
 	if (pdist < tdist)
 	{
-		targetPosition = Player::Instance().GetPosition();
-		if (attackInterval < 0.0f)
+		if (beamHandle == -1)
 		{
-			Player::Instance().ApplyDamage(1, 0.0f);
+			beamHandle = beamEffect->Play(position);
+
+			float dx = Player::Instance().GetPosition().x - position.x;
+			float dz = Player::Instance().GetPosition().z - position.z;
+			angle.y = atan2f(dx, dz);
+
+			DirectX::XMFLOAT3 effAngle = angle;
+			effAngle.y -= DirectX::XM_PIDIV2;
+
+			beamEffect->SetAngle(beamHandle, effAngle);
+		}
+
+		DirectX::XMFLOAT3 vec = Player::Instance().GetPosition() - position;
+
+		vec = DirectXCommon::Normalize(vec);
+
+		DirectX::XMFLOAT3 forword = DirectXCommon::Normalize(DirectXCommon::GetForward(transform));
+		float dot = DirectXCommon::Dot(vec, forword);
+
+		if (dot > 0.95f&&canDamage == true)
+		{
+			Player::Instance().ApplyDamage(1,0.0f);
 			attackInterval = 1.0f;
+			canDamage = false;
 		}
 	}
 	else
 	{
-		targetPosition = tower.GetPosition();
-		if (attackInterval < 0.0f)
+		if (beamHandle == -1)
 		{
+			beamHandle = beamEffect->Play(position);
+
+			float dx = tower.GetPosition().x - position.x;
+			float dz = tower.GetPosition().z - position.z;
+			angle.y = atan2f(dx, dz);
+
+			DirectX::XMFLOAT3 effAngle = angle;
+			effAngle.y -= DirectX::XM_PIDIV2;
+
+			beamEffect->SetAngle(beamHandle, effAngle);
+		}
+
+		if (canDamage == true)
+		{
+			targetPosition = tower.GetPosition();
 			tower.TowerApplyDamage(10);
 			attackInterval = 1.0f;
+			canDamage = false;
 		}
 	}
-
-	attackInterval -= elapsedTime;
 
 	MoveToTarget(elapsedTime, 0.0f, 1.0f);
 

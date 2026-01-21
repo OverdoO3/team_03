@@ -28,9 +28,6 @@
     <Filter Include="Source\misc">
       <UniqueIdentifier>{a361ae74-18f8-4fd0-a513-af383e883585}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Framework/Main">
-      <UniqueIdentifier>{8023c35c-b923-436d-968b-17bf96488f35}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Common">
       <UniqueIdentifier>{5ea94a7d-0819-4511-8d4f-ff0c4be99448}</UniqueIdentifier>
     </Filter>
@@ -69,6 +66,9 @@
     </Filter>
     <Filter Include="Source\Common\Resource">
       <UniqueIdentifier>{346fadfc-51a5-4724-a292-27f10cff03a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Common\Framework/Main">
+      <UniqueIdentifier>{8023c35c-b923-436d-968b-17bf96488f35}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -190,7 +190,7 @@
       <Filter>Source\misc</Filter>
     </ClInclude>
     <ClInclude Include="Source\Framework.h">
-      <Filter>Source\Framework/Main</Filter>
+      <Filter>Source\Common\Framework/Main</Filter>
     </ClInclude>
     <ClInclude Include="Source\Scene.h">
       <Filter>Source\Scene</Filter>
@@ -220,9 +220,6 @@
       <Filter>Source\Common\Collision</Filter>
     </ClInclude>
     <ClInclude Include="Source\MathUtils.h">
-      <Filter>Source\Common\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\team02_1\Source\DirectXCommon.h">
       <Filter>Source\Common\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\team02_1\Source\KeyInput.h">
@@ -305,6 +302,12 @@
     </ClInclude>
     <ClInclude Include="Source\DamageDrawManager.h">
       <Filter>Source\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DirectXCommon.h">
+      <Filter>Source\Common\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\nexus.h">
+      <Filter>Source\Stages</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -411,10 +414,10 @@
       <Filter>Source\misc</Filter>
     </ClCompile>
     <ClCompile Include="Source\Framework.cpp">
-      <Filter>Source\Framework/Main</Filter>
+      <Filter>Source\Common\Framework/Main</Filter>
     </ClCompile>
     <ClCompile Include="Source\Main.cpp">
-      <Filter>Source\Framework/Main</Filter>
+      <Filter>Source\Common\Framework/Main</Filter>
     </ClCompile>
     <ClCompile Include="Source\SceneGame.cpp">
       <Filter>Source\Scene</Filter>

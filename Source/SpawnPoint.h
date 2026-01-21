@@ -34,4 +34,10 @@ private:
 	
 	float timer = 0.0f;
 	int count = 0;
+
+	std::shared_ptr<Model>enemyMeleeModel = nullptr;
+	std::shared_ptr<Model>enemyRangeModel = nullptr;
+
+	std::shared_ptr<Effect> hitEffect = nullptr;
+	std::shared_ptr<Effect> beamEffect = nullptr;
 };

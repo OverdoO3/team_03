@@ -19,6 +19,7 @@ public:
 	void SetLookAt(const DirectX::XMFLOAT3& eye, const DirectX::XMFLOAT3& focus, const DirectX::XMFLOAT3& up);
 	//描画範囲設定
 	void SetPerspectiveFov(float fovY, float aspect, float nearZ, float farZ);
+	void SetEye(DirectX::XMFLOAT3 pos) { eye = pos; }
 	//びゅー行列取得
 	const DirectX::XMFLOAT4X4& GetView() const { return view; }
 	//プロジェクション行列取得

@@ -10,6 +10,8 @@
 #include "SceneLoading.h"
 #include "SceneTitle.h"
 #include "DamageDrawManager.h"
+#include <algorithm>
+#include "KeyInput.h"
 
 using json = nlohmann::json;
 // 初期化
@@ -19,9 +21,10 @@ void SceneGame::Initialize()
 	pathfinding = std::make_unique<Pathfinding>();
 	pathfinding->Initialize(stage.get());
 	Player::Instance().Initialize();
+	EnemyManager::Instance().Initialize();
 
-	dummy = new EnemyMelee(stage.get(), pathfinding.get());
-	dummy->InitializeEnemy(stage.get(), pathfinding.get());
+	EffectManager::Instance().Initialize();
+	WaveManager::Instance().Initialize();
 
 	//カメラしょきか
 	Graphics& graphics = Graphics::Instance();
@@ -38,43 +41,100 @@ void SceneGame::Initialize()
 		1000.0f//クリップ遠
 	);
 	cameraController = std::make_unique<CameraController>();
+	
+	static int count = 0;
+
+	if (count > 0) return;
 
 	int index = 0;
 	std::ifstream file("map.json");
 	if (file)
 	{
 		json data = json::parse(file);
-		for (int i = 0;i < data["Width"];i++)
+		for (int y = 0;y < data["Width"];y++)
 		{
-			for (int j = 0;j < data["Height"];j++)
+			for (int x = 0;x < data["Height"];x++)
 			{
-				stage->IsWalkable(i, j);
-				
-				maps[i][j] = data["cells"][index++].get<int>();
-				if (maps[j][i] == 3)
+				stage->IsWalkable(y,x);
+				maps[y][x] = data["cells"][index++].get<int>();
+				if (maps[y][x] == 3)
 				{
 					DirectX::XMFLOAT3 pos;
-					pos = stage->GridToWorld(i, j);
+					pos = stage->GridToWorld(x, y);
 					WaveManager::Instance().MakeSpawnPoint(pos,0);
+				}
+				if (maps[x][y] == 4)
+				{
+					DirectX::XMFLOAT3 pos;
+					pos = stage->GridToWorld(y, x);
+					stage->GetNexus()->SetPosition(pos);
 				}
 			}
 		}
 	}
-
+	count++;
 	Player::Instance().setStage(stage.get());
+
+	towerBreakSpr = std::make_unique<Sprite>("Data/Sprite/tower_break_text.png");
+	blackSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
+	fadeSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
+	ResultSpr = std::make_unique<Sprite>("Data/Sprite/game_result_backgraund.png");
 }
 // 終了化
 void SceneGame::Finalize()
 {
 	Player::Instance().Finalize();
 	EnemyManager::Instance().Finalize();
-	delete dummy;
 }
 
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
-	//DirectX::XMFLOAT3 target = player->GetPosition();]
+	if (stage->GetNexus()->GetHP() <= 0)
+	{
+		isAlive = false;
+	}
+	if (!isAlive)
+	{
+		float smooth = 1.0f;
+		float t = 1.0f - expf(-smooth * elapsedTime);
+
+		DirectX::XMFLOAT3 eye = Camera::Instance().GetEye();
+
+		DirectX::XMFLOAT3 targetEye = stage->GetNexus()->GetPosition();
+		targetEye.y += 10.0f;
+		targetEye.z += 10.0f;
+
+		eye = Lerp(eye, targetEye, t);
+
+		cameraController->SetManualEye(true);
+		cameraController->SetEye(eye);
+		cameraController->SetTarget(stage->GetNexus()->GetPosition());
+		cameraController->Update(elapsedTime);
+
+		KeyInput::Instance().Update();
+
+		if (KeyInput::Instance().GetKeyDown(VK_LBUTTON))
+		{
+			isResult = true;
+		}
+		if (isResult)
+		{
+			resultTimer -= elapsedTime;
+			if (resultTimer < 0.0f)
+			{
+				isResultShow = true;
+			}
+			if (isResultShow)
+			{
+				if (KeyInput::Instance().GetKeyDown(VK_LBUTTON))
+				{
+					SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
+				}
+			}
+		}
+		return;
+	}
 	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
 	target.y += 0.5f;
 	cameraController->SetTarget(target);
@@ -82,13 +142,10 @@ void SceneGame::Update(float elapsedTime)
 	stage->Update(elapsedTime);
 	Player::Instance().Update(elapsedTime,maps);
 	EnemyManager& enemymanager = EnemyManager::Instance();
-	enemymanager.Update(elapsedTime,*stage->GetTower());
-	EffectManager::Instance().Update(elapsedTime);
+	
+	enemymanager.Update(elapsedTime,stage->GetTower(),stage->GetNexus());
 
-	if (stage->GetTower()->GetHP() <= 0)
-	{
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
-	}
+	EffectManager::Instance().Update(elapsedTime);
 
 	gameTimer += elapsedTime;
 
@@ -148,13 +205,27 @@ void SceneGame::Render()
 	// 2Dスプライト描画
 	{
 		DamegeDrawManager::Instance().Render(rc);
+
+		if (!isAlive)
+		{
+			if (isResultShow)
+			{
+				blackSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, resultTimer + 0.5f);
+				ResultSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, 1);
+				//fadeSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, 1);
+			}
+			else
+			{
+				blackSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, 0.5f);
+				towerBreakSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, resultTimer);
+			}
+		}
 	}
 }
 
 // GUI描画
 void SceneGame::DrawGUI()
 {
-	//player->DrawDebugGUI();
 	Player::Instance().DrawDebugGUI();
 	stage->DrawDebugGUI();
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();

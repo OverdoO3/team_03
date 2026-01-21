@@ -4,6 +4,7 @@ Plane::Plane()
 {
 	model = std::make_unique<Model>("Data/Model/Player/eff.mdl");
 	axeTypeModel = std::make_unique<Model>("Data/Model/Player/effAxe.mdl");
+	enemyTypeModel = std::make_unique<Model>("Data/Model/Player/enemyeff.mdl");
 	scale = { 0.01f,0.01f,0.01f };
 	UpdateTransfomEuler();
 	model->UpdateTransform();
@@ -12,7 +13,11 @@ Plane::Plane()
 void Plane::Update(float elapsedTime, DirectX::XMFLOAT3 pos,float charge,float angleY)
 {
 	float length = charge * 0.1f;
-	if (type == 2)
+	if (type == 3)
+	{
+		scale = { 0.01f,0.01f,0.1f };
+	}
+	else if (type == 2)
 	{
 		scale = { 0.01f,0.01f,0.01f };
 		scale.z = length * 0.5f;
@@ -37,7 +42,11 @@ void Plane::Update(float elapsedTime, DirectX::XMFLOAT3 pos,float charge,float a
 
 void Plane::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
-	if (type == 2)
+	if (type == 3)
+	{
+		renderer->Render(rc, transform, enemyTypeModel.get(), ShaderId::Lambert);
+	}
+	else if (type == 2)
 	{
 		renderer->Render(rc, transform, model.get(), ShaderId::Lambert);
 	}

@@ -14,6 +14,9 @@ class Player : public Character
 private:
 	Player() {};
 	~Player() override{};
+
+	static constexpr int WIDTH = 60;
+	static constexpr int HEIGHT = 60;
 public:
 	static Player& Instance()
 	{
@@ -26,9 +29,9 @@ public:
 
 	void DrawDebugGUI();
 
-	bool InputMove(float elapsedTime, const int(&maps)[38][38]);
+	bool InputMove(float elapsedTime, const int(&maps)[WIDTH][HEIGHT]);
 
-	void Update(float elapsedTime, const int(&maps)[38][38]);
+	void Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT]);
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer);
 
@@ -39,12 +42,12 @@ public:
 	void InputAttack();
 	void InputAvoid();
 
-	void InputRush(float elapsedTime, const int(&maps)[38][38]);
+	void InputRush(float elapsedTime, const int(&maps)[WIDTH][HEIGHT]);
 	void InputCharge(float elapsedTime);
 
 	void setStage(Stage* s) { stage = s; }
 
-	void MoveWithCollision(float elapsedTime,float dx,float dz,const int(&maps)[38][38],float value = 1);
+	void MoveWithCollision(float elapsedTime,float dx,float dz,const int(&maps)[WIDTH][HEIGHT],float value = 1);
 
 	void ChangeWepon();
 private:
@@ -54,7 +57,6 @@ private:
 	float turnSpeed = DirectX::XMConvertToRadians(720.0f);
 	void CollisionPlyerVsEnemies();
 
-	std::unique_ptr<Effect> trailEffect = nullptr;
 	std::unique_ptr<Effect> WeponTrailEffect = nullptr;
 	Effekseer::Handle trailHandle = -1;
 
@@ -71,6 +73,8 @@ private:
 	std::unique_ptr<AudioSource> hitSE = nullptr;
 	std::unique_ptr<Wepon> weponCol = nullptr;
 	std::shared_ptr<Model> wepons[3];
+	std::unique_ptr<Model> dirModel;
+
 	int riskGauge[3] = {0,0,0};
 
 	int maxGauge = 100;
@@ -118,4 +122,6 @@ private:
 		Attack,
 	};
 	State								state = State::Idle;
+
+	State prevState;
 };

@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 #include "Enemy.h"
+#include "nexus.h"
 #include <memory>
 
 class EnemyManager
@@ -17,10 +18,11 @@ public:
 		static EnemyManager instance;
 		return instance;
 	}
+	void Initialize();
 
 	void Finalize();
 
-	void Update(float elapsedTime,Tower& tower);
+	void Update(float elapsedTime,std::vector<std::unique_ptr<Tower>>& towers,std::unique_ptr<Nexus>& nexus);
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer);
 
@@ -34,12 +36,17 @@ public:
 
 	Enemy* GetEnemy(int index) { return enemies.at(index).get(); }
 
+	int GetKillCount() { return killCount; }
+
 	const std::vector<std::unique_ptr<Enemy>>& GetEnemys() { return enemies; }
 
 	void CollisionEnemyVsEnemies();
+
+	Tower* FindNearestTower(const Enemy& enemy, const std::vector<std::unique_ptr<Tower>>& towers,const std::unique_ptr<Nexus>& nexus);
+
 private:
 	std::vector<std::unique_ptr<Enemy>> enemies;
-
 	std::vector<std::unique_ptr<Enemy>> removes;
 
+	int killCount = 0;
 };

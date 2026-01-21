@@ -7,13 +7,15 @@ using json = nlohmann::json;
 Stage::Stage()
 {
 	//ステージのモデルを読み込む
-	model = std::make_unique<Model>("Data/Model/Stage/demostage.mdl");
+	model = std::make_unique<Model>("Data/Model/Stage/field.mdl");
 
-	scale = { 0.03f,0.03f,0.03f };
+	nexus = std::make_unique<Nexus>();
+
+	position = { 0.0f,-2.8f,0.0f};
+	scale = { 0.02f,0.02f,0.02f };
 	angle = { 0,1.57f,0 };
 	UpdateTransfomEuler();
 
-	tower = std::make_unique<Tower>();
 	int index = 0;
 	std::ifstream file("map.json");
 	if (file)
@@ -24,6 +26,14 @@ Stage::Stage()
 			for (int j = 0;j < HEIGHT;j++)
 			{
 				map[i][j] = data["cells"][index++].get<int>();
+				if (map[i][j] == 2)
+				{
+					DirectX::XMFLOAT3 pos = GridToWorld(j, i);
+					auto t = std::make_unique<Tower>();
+					t->SetPosition(pos);
+					t->UpdateTransfomEuler();
+					towers.emplace_back(std::move(t));
+				}
 			}
 		}
 	}
@@ -37,7 +47,10 @@ Stage::~Stage()
 //更新処理
 void Stage::Update(float elapsedTime)
 {
-	
+	for (auto& t : towers)
+	{
+		t->Update(elapsedTime);
+	}
 }
 
 //描画処理
@@ -45,6 +58,13 @@ void Stage::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
 	//レンダラに描画させる
 	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);
+	for (auto& t : towers)
+	{
+		if (t->GetHP() > 0)
+		{
+			t->Render(rc, renderer);
+		}
+	}
 }
 
 void Stage::DebugDrawGrid(const RenderContext& rc,ShapeRenderer* renderer,ModelRenderer* modelRenderer)
@@ -90,12 +110,9 @@ void Stage::DebugDrawGrid(const RenderContext& rc,ShapeRenderer* renderer,ModelR
 					rc,
 					pos,
 					{ 0,0,0 },
-					{ 1.0f - margin, 5.0f, 1.0f - margin },
+					{ 1.0f - margin, 2.0f, 1.0f - margin },
 					color
 				);
-				tower->SetPosition(pos);
-				tower->UpdateTransfomEuler();
-				tower->Render(rc, modelRenderer);
 			}
 			else if (map[z][x] == 3)
 			{// スポーンセル
@@ -105,6 +122,17 @@ void Stage::DebugDrawGrid(const RenderContext& rc,ShapeRenderer* renderer,ModelR
 					pos,
 					{ 0,0,0 },
 					{ 1.0f - margin, boxHeight, 1.0f - margin },
+					color
+				);
+			}
+			else if (map[z][x] == 4)
+			{// スポーンセル
+				color = { 0.0f, 1.0f, 1.0f, 1.0f };
+				renderer->RenderBox(
+					rc,
+					pos,
+					{ 0,0,0 },
+					{ 1.0f - margin, 100, 1.0f - margin },
 					color
 				);
 			}
@@ -153,7 +181,7 @@ void Stage::DrawDebugGUI()
 
 	if (ImGui::Begin("Tower", nullptr, ImGuiWindowFlags_None))
 	{
-		int a = tower->GetHP();
+		int a = towers[0]->GetHP();
 		ImGui::DragInt("HP", &a);
 	}
 	ImGui::End();

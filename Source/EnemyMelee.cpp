@@ -4,11 +4,11 @@
 #include "ProjectileStraight.h"
 #include <imgui.h>
 
-EnemyMelee::EnemyMelee(Stage* map, Pathfinding* pf)
+EnemyMelee::EnemyMelee(Stage* map, Pathfinding* pf, std::shared_ptr<Model> mod, std::shared_ptr<Effect> hiteff)
 {
-	hitEffect = std::make_unique<Effect>("Data/Effect/hit.efk");
-	model = std::make_unique<Model>("Data/Model/Enemy/small_enemy.mdl");
-	
+	hitEffect = hiteff;
+	model = mod;
+
 	InitializeEnemy(map, pf);
 
 	scale.x = scale.y = scale.z = 0.05f;
@@ -20,28 +20,27 @@ EnemyMelee::EnemyMelee(Stage* map, Pathfinding* pf)
 	health = 100;
 
 	UpdateTransform();
-
-	model->UpdateTransform();
 }
 
 EnemyMelee::~EnemyMelee()
 {
 }
 
-void EnemyMelee::Update(float elapsedTime, Tower& tower)
+void EnemyMelee::Update(float elapsedTime)
 {
 	float dx = Player::Instance().GetPosition().x - position.x;
 	float dz = Player::Instance().GetPosition().z - position.z;
 	float dist = sqrtf(dx * dx + dz * dz);
 
-	float tdx = tower.GetPosition().x - position.x;
-	float tdz = tower.GetPosition().z - position.z;
+	if (!targetTower)return;
+	float tdx = targetTower->GetPosition().x - position.x;
+	float tdz = targetTower->GetPosition().z - position.z;
 	float tdist = sqrtf(tdx * tdx + tdz * tdz);
 
 	switch (state)
 	{
 	case EnemyMelee::State::Wander:
-		UpdateEnemy(elapsedTime, tower);
+		UpdateEnemy(elapsedTime, targetTower);
 
 		if (dist < meleeAttackCanRange || tdist < meleeAttackCanRange)
 		{
@@ -50,7 +49,7 @@ void EnemyMelee::Update(float elapsedTime, Tower& tower)
 		}
 		break;
 	case EnemyMelee::State::Attack:
-		UpdateAttackState(elapsedTime,tower);
+		UpdateAttackState(elapsedTime,*targetTower);
 		if (dist > meleeAttackCanRange&&tdist > meleeAttackCanRange&& stateTimer <= 0.0f)
 		{
 			enemyWepon.SetIsAttack(false);

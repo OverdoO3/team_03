@@ -206,7 +206,6 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\team02_1\Source\DirectXCommon.h" />
     <ClInclude Include="..\team02_1\Source\KeyInput.h" />
     <ClInclude Include="..\team02_1\Source\Lerp.h" />
     <ClInclude Include="External\imgui-docking\imconfig.h" />
@@ -227,6 +226,7 @@
     <ClInclude Include="Source\CursorManager.h" />
     <ClInclude Include="Source\DamageDraw.h" />
     <ClInclude Include="Source\DamageDrawManager.h" />
+    <ClInclude Include="Source\DirectXCommon.h" />
     <ClInclude Include="Source\Effect.h" />
     <ClInclude Include="Source\EffectManager.h" />
     <ClInclude Include="Source\Enemy.h" />
@@ -237,6 +237,7 @@
     <ClInclude Include="Source\Framework.h" />
     <ClInclude Include="Source\MathUtils.h" />
     <ClInclude Include="Source\Menu.h" />
+    <ClInclude Include="Source\nexus.h" />
     <ClInclude Include="Source\Node.h" />
     <ClInclude Include="Source\Obj.h" />
     <ClInclude Include="Source\Pathfinding.h" />

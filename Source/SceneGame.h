@@ -13,6 +13,9 @@
 class SceneGame : public Scene
 {
 public:
+	static constexpr int WIDTH = 60;
+	static constexpr int HEIGHT = 60;
+
 	SceneGame() {};
 	~SceneGame()  override {};
 
@@ -34,11 +37,36 @@ private:
 	std::unique_ptr<Stage> stage = nullptr;
 	std::unique_ptr<Pathfinding> pathfinding = nullptr;
 
-	Enemy* dummy;
-
 	float gameTimer = 0.0f;
 
-	int maps[38][38];
+	int maps[WIDTH][HEIGHT];
 
 	std::unique_ptr<CameraController> cameraController = nullptr;
+
+	std::unique_ptr<Sprite> towerBreakSpr;
+	std::unique_ptr<Sprite> blackSpr;
+
+	std::unique_ptr<Sprite> fadeSpr;
+
+	std::unique_ptr<Sprite> ResultSpr;
+
+	int killCount = 0;
+	int waveCount = 0;
+
+	bool isAlive = true;
+	bool isResult = false;
+	bool isResultShow = false;
+	float resultTimer = 1.0f;
+
+	DirectX::XMFLOAT3 Lerp(
+		const DirectX::XMFLOAT3& a,
+		const DirectX::XMFLOAT3& b,
+		float t)
+	{
+		return {
+			a.x + (b.x - a.x) * t,
+			a.y + (b.y - a.y) * t,
+			a.z + (b.z - a.z) * t
+		};
+	}
 };

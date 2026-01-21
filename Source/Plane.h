@@ -9,6 +9,8 @@ private:
 	int type;
 
 	std::unique_ptr<Model> axeTypeModel;
+	std::unique_ptr<Model> enemyTypeModel;
+
 public:
 	Plane();
 	~Plane() {};

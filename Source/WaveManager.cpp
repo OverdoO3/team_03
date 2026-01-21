@@ -2,7 +2,14 @@
 #include "EnemyManager.h"
 void WaveManager::Initialize()
 {
-
+	timer = 0;
+	currentWave = 0;
+	finishCounts = 0;
+	state = WaveState::Waiting;
+	timer = 0.0f;
+	spawnIndex = 0;
+	spawnedCount = 0;
+	startDelay = 0;
 }
 
 void WaveManager::Update(float elapsedTime,Stage* stage,Pathfinding* path)
@@ -61,8 +68,6 @@ void WaveManager::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* r
 	{
 		po->RenderDebugPrimitive(rc, renderer);
 	}
-
-
 }
 
 void WaveManager::DebugGUI()
