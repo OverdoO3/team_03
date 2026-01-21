@@ -19,6 +19,8 @@ public:
 
 private:
 	std::unique_ptr<Sprite> sprite = nullptr;
+	std::unique_ptr<Sprite> spr = nullptr;
+
 	float angle = 0.0f;
 	Scene* nextScene = nullptr;
 	std::thread* thread = nullptr;

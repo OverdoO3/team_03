@@ -24,4 +24,6 @@ public:
 	void DrawGUI() override;
 private:
 	std::unique_ptr<Sprite> sprite = nullptr;
+	std::unique_ptr<Sprite> sprUI = nullptr;
+	int mousec=0;
 };
