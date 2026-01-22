@@ -103,7 +103,8 @@ void SceneGame::Render()
 
 	// 2Dスプライト描画
 	{
-
+		Player::Instance().RenderUI(rc);
+		
 	}
 }
 
