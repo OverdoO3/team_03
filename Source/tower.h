@@ -18,7 +18,7 @@ public:
 	void UpdateAnimation(float elapsedTime);
 
 protected:
-	int									HP = 10;
+	int									HP = 100;
 	std::unique_ptr<Effect> explosion;
 	Effekseer::Handle expHandle = -1;
 private:

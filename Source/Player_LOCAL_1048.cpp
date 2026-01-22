@@ -41,13 +41,6 @@ void Player::Initialize()
 
 	state = State::Idle;
 	PlayAnimation("idle", true);
-
-	sprHP= std::make_unique<Sprite>("Data/Sprite/play_HP_UI.png");
-	sprtower= std::make_unique<Sprite>("Data/Sprite/tower_HP_UI.png");
-	sprRisuku = std::make_unique<Sprite>("Data/Sprite/risk_UI.png");
-	sprwepon = std::make_unique<Sprite>("Data/Sprite/wepon_UI.png");
-	sprnumber = std::make_unique<Sprite>("Data/Sprite/number_UI.png");
-
 }
 
 void Player::Finalize()
@@ -276,28 +269,6 @@ void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* render
 
 	renderer->RenderSphere(rc, WeponRootPos, 1.0f, { 1,1,1,1 });
 	renderer->RenderSphere(rc, WeponTipPos, 1.0f, { 0,0,1,1 });
-}
-
-void Player::RenderUI(const RenderContext& rc)
-{
-	float s = 1.5;
-	sprHP->Render(rc, 100, 900, 0, 376*s, 40*s, 0, 0, 376, 40, 0, 1, 1, 1, 1);
-	sprHP->Render(rc, 100, 900, 0, 3.76 * health*s, 40*s, 0, 40, 3.76 * health, 40, 0, 1, 1, 1, 1);
-	sprtower->Render(rc, 1750, 650,          0, 80, 300    , 0, 0, 80, 300,     0, 1, 1, 1, 1);
-	sprtower->Render(rc, 1750, 950- 3 * 100, 0, 80, 3 * 100, 80,0, 80, 3 * 100, 0, 1, 1, 1, 1);
-
-
-	sprRisuku->Render(rc, 100, 650, 0, 150*s, 140*s, 750, 0, 150, 140, 0, 1, 1, 1, 1);
-
-	sprwepon->Render(rc, 100, 340, 0, 80*s, 80*s, 0, 0, 80, 80, 0, 1, 1, 1, 1);
-	sprwepon->Render(rc, 100, 460, 0, 80*s, 80*s, 0, 80, 80, 80, 0, 1, 1, 1, 1);
-	sprwepon->Render(rc, 100, 580, 0, 80*s, 80*s, 0, 160, 80, 80, 0, 1, 1, 1, 1);
-	for (int i = 0, t = 0;i < 2;i++)
-	{
-		sprnumber->Render(rc, 300 - i * 140, 50, 0, 70, 70, (t % 60) % 10 * 100, 0, 100, 100, 0, 1, 1, 1, 1);
-		sprnumber->Render(rc, 230 - i * 140, 50, 0, 70, 70, (t % 60) / 10 * 100, 0, 100, 100, 0, 1, 1, 1, 1);
-		t = t / 60;
-	}
 }
 
 void Player::InputAttack()

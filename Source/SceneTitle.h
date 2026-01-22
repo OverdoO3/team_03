@@ -28,6 +28,8 @@ public:
 private:
 	std::unique_ptr<Sprite> sprite = nullptr;
 	std::unique_ptr<Sprite> sprUI = nullptr;
+	std::unique_ptr<Sprite> spr = nullptr;
+
 
 	std::unique_ptr<Tower>tower = nullptr;
 

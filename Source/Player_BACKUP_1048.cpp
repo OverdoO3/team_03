@@ -21,6 +21,7 @@ void Player::Initialize()
 	wepons[1] = std::make_unique<Model>("Data/Model/Player/axe_model.mdl");
 	wepons[2] = std::make_unique<Model>("Data/Model/Player/spear_model.mdl");
 
+<<<<<<< HEAD
 	model = wepons[(int)nowWepon];
 	WeponTrailEffect= std::make_unique<Effect>("Data/Effect/wepon.efk");
 	riskAura = std::make_unique<Effect>("Data/Effect/risk_aura/risk_aura.efk");
@@ -41,6 +42,8 @@ void Player::Initialize()
 
 	state = State::Idle;
 	PlayAnimation("idle", true);
+=======
+	col = std::make_unique<OnCollisionWepon>();
 
 	sprHP= std::make_unique<Sprite>("Data/Sprite/play_HP_UI.png");
 	sprtower= std::make_unique<Sprite>("Data/Sprite/tower_HP_UI.png");
@@ -48,6 +51,7 @@ void Player::Initialize()
 	sprwepon = std::make_unique<Sprite>("Data/Sprite/wepon_UI.png");
 	sprnumber = std::make_unique<Sprite>("Data/Sprite/number_UI.png");
 
+>>>>>>> origin/main
 }
 
 void Player::Finalize()
@@ -278,6 +282,9 @@ void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* render
 	renderer->RenderSphere(rc, WeponTipPos, 1.0f, { 0,0,1,1 });
 }
 
+<<<<<<< HEAD
+void Player::InputAttack()
+=======
 void Player::RenderUI(const RenderContext& rc)
 {
 	float s = 1.5;
@@ -300,7 +307,8 @@ void Player::RenderUI(const RenderContext& rc)
 	}
 }
 
-void Player::InputAttack()
+void Player::InputProjectile()
+>>>>>>> origin/main
 {
 	//if (GetAsyncKeyState(VK_LBUTTON))
 	if (KeyInput::Instance().GetKeyDown(VK_LBUTTON))

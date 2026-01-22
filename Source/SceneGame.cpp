@@ -225,6 +225,8 @@ void SceneGame::Render()
 				towerBreakSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, resultTimer);
 			}
 		}
+		Player::Instance().RenderUI(rc);
+		
 	}
 }
 

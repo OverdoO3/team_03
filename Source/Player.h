@@ -36,6 +36,8 @@ public:
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer);
 
+	void RenderUI(const RenderContext& rc);
+
 	void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer);
 
 	void CollisionWeponVsEnemies();
@@ -85,6 +87,12 @@ private:
 	int riskGauge[3] = {0,0,0};
 
 	int maxGauge = 100;
+
+	std::unique_ptr<Sprite> sprHP = nullptr;
+	std::unique_ptr<Sprite> sprtower= nullptr;
+	std::unique_ptr<Sprite> sprRisuku = nullptr;
+	std::unique_ptr<Sprite> sprwepon = nullptr;
+	std::unique_ptr<Sprite> sprnumber = nullptr;
 
 	Stage* stage;
 
