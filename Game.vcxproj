@@ -226,6 +226,7 @@
     <ClInclude Include="Source\CursorManager.h" />
     <ClInclude Include="Source\DamageDraw.h" />
     <ClInclude Include="Source\DamageDrawManager.h" />
+    <ClInclude Include="Source\Dir.h" />
     <ClInclude Include="Source\DirectXCommon.h" />
     <ClInclude Include="Source\Effect.h" />
     <ClInclude Include="Source\EffectManager.h" />
@@ -301,6 +302,7 @@
     <ClCompile Include="Source\Collision.cpp" />
     <ClCompile Include="Source\DamageDraw.cpp" />
     <ClCompile Include="Source\DamageDrawManager.cpp" />
+    <ClCompile Include="Source\Dir.cpp" />
     <ClCompile Include="Source\Effect.cpp" />
     <ClCompile Include="Source\EffectManager.cpp" />
     <ClCompile Include="Source\Enemy.cpp" />

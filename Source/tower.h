@@ -19,10 +19,13 @@ public:
 
 protected:
 	int									HP = 10;
+	std::unique_ptr<Effect> explosion;
+	Effekseer::Handle expHandle = -1;
 private:
 	int									animationIndex = -1;
 	float								animationSeconds = 0.0f;
 	bool								animationLoop = false;
 	bool								animationPlaying = false;
 	float								animationBlendSecondsLength = 0.2f;
+
 };

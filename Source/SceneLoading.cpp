@@ -5,7 +5,6 @@
 
 void SceneLoading::Initialize()
 {
-
 	sprite = std::make_unique<Sprite>("Data/Sprite/LoadingIcon.png");
 	spr = std::make_unique<Sprite>("Data/Sprite/game_result_backgraund_2.png");
 

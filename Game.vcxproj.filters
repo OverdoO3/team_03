@@ -204,9 +204,6 @@
     <ClInclude Include="Source\SceneManager.h">
       <Filter>Source\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="Source\SceneTitle.h">
-      <Filter>Source\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Stage.h">
       <Filter>Source\Stages</Filter>
     </ClInclude>
@@ -308,6 +305,12 @@
     </ClInclude>
     <ClInclude Include="Source\nexus.h">
       <Filter>Source\Stages</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SceneTitle.h">
+      <Filter>Source\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Dir.h">
+      <Filter>Source\Chara</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -499,6 +502,9 @@
     </ClCompile>
     <ClCompile Include="Source\DamageDrawManager.cpp">
       <Filter>Source\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Dir.cpp">
+      <Filter>Source\Chara</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

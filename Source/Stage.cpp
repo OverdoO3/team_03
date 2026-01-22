@@ -60,10 +60,7 @@ void Stage::Render(const RenderContext& rc, ModelRenderer* renderer)
 	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);
 	for (auto& t : towers)
 	{
-		if (t->GetHP() > 0)
-		{
-			t->Render(rc, renderer);
-		}
+		t->Render(rc, renderer);
 	}
 }
 
@@ -77,7 +74,7 @@ void Stage::DebugDrawGrid(const RenderContext& rc,ShapeRenderer* renderer,ModelR
 		for (int x = 0; x < WIDTH; ++x)
 		{
 			DirectX::XMFLOAT3 pos = GridToWorld(x, z);
-			pos.y += boxHeight / 2.0f; // 床に埋まらないように少し浮かせる
+			pos.y -= 2.0f;
 
 			DirectX::XMFLOAT4 color;
 			if (map[z][x] == 0)
@@ -126,7 +123,7 @@ void Stage::DebugDrawGrid(const RenderContext& rc,ShapeRenderer* renderer,ModelR
 				);
 			}
 			else if (map[z][x] == 4)
-			{// スポーンセル
+			{// NEXUSセル
 				color = { 0.0f, 1.0f, 1.0f, 1.0f };
 				renderer->RenderBox(
 					rc,
@@ -176,12 +173,12 @@ DirectX::XMFLOAT3 Stage::GridToWorld(int x, int z) const
 void Stage::DrawDebugGUI()
 {
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 200), ImGuiCond_Once);
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 1000, pos.y + 200), ImGuiCond_Once);
 	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 
 	if (ImGui::Begin("Tower", nullptr, ImGuiWindowFlags_None))
 	{
-		int a = towers[0]->GetHP();
+		int a = nexus->GetHP();
 		ImGui::DragInt("HP", &a);
 	}
 	ImGui::End();

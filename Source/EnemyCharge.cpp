@@ -26,6 +26,7 @@ EnemyCharge::EnemyCharge(Stage* map, Pathfinding* pf, std::shared_ptr<Model> mod
 
 EnemyCharge::~EnemyCharge()
 {
+	beamEffect->Stop(beamHandle);
 }
 
 void EnemyCharge::Update(float elapsedTime)

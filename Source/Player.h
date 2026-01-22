@@ -7,6 +7,7 @@
 #include "Stage.h"
 #include "Wepon.h"
 #include "Plane.h"
+#include "Dir.h"
 
 //プレイヤー
 class Player : public Character
@@ -50,6 +51,11 @@ public:
 	void MoveWithCollision(float elapsedTime,float dx,float dz,const int(&maps)[WIDTH][HEIGHT],float value = 1);
 
 	void ChangeWepon();
+
+	void UpdateWeponCollisionFromMotion();
+
+	float GetHitStopTimer() {return hitStopTimer;}
+
 private:
 	//スティック入力値から移動ベクトルを取得
 	DirectX::XMFLOAT3 GetMoveVec() const;
@@ -73,8 +79,9 @@ private:
 	std::unique_ptr<AudioSource> hitSE = nullptr;
 	std::unique_ptr<Wepon> weponCol = nullptr;
 	std::shared_ptr<Model> wepons[3];
-	std::unique_ptr<Model> dirModel;
 
+	std::unique_ptr<Dir> dirModel = nullptr;
+	
 	int riskGauge[3] = {0,0,0};
 
 	int maxGauge = 100;
@@ -110,6 +117,7 @@ private:
 	int SpearDamage = 3;
 
 	DirectX::XMFLOAT3 WeponTipPos{};
+	DirectX::XMFLOAT3 WeponRootPos{};
 
 	enum class State
 	{
@@ -124,4 +132,6 @@ private:
 	State								state = State::Idle;
 
 	State prevState;
+
+	float hitStopTimer = 0.0f;
 };

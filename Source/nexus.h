@@ -6,7 +6,7 @@ class Nexus : public Tower
 public:
 	Nexus()
 	{
-		HP = 30;
+		HP = 0;
 	}
 
 	void Update(float elapsedTime) override

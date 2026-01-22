@@ -44,6 +44,15 @@ void SceneGame::Initialize()
 	
 	static int count = 0;
 
+	towerBreakSpr = std::make_unique<Sprite>("Data/Sprite/tower_break_text.png");
+	blackSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
+	fadeSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
+	resultSpr = std::make_unique<Sprite>("Data/Sprite/game_result_backgraund.png");
+
+	NumberSpr = std::make_unique<Sprite>("Data/Sprite/number_UI2.png");
+
+	explosion = std::make_unique<Effect>("Data/Effect/explosion/explosion.efk");
+
 	if (count > 0) return;
 
 	int index = 0;
@@ -75,16 +84,14 @@ void SceneGame::Initialize()
 	count++;
 	Player::Instance().setStage(stage.get());
 
-	towerBreakSpr = std::make_unique<Sprite>("Data/Sprite/tower_break_text.png");
-	blackSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
-	fadeSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
-	ResultSpr = std::make_unique<Sprite>("Data/Sprite/game_result_backgraund.png");
+
 }
 // I—¹‰»
 void SceneGame::Finalize()
 {
 	Player::Instance().Finalize();
 	EnemyManager::Instance().Finalize();
+	explosion->Stop(expHandle);
 }
 
 // XVˆ—
@@ -93,17 +100,23 @@ void SceneGame::Update(float elapsedTime)
 	if (stage->GetNexus()->GetHP() <= 0)
 	{
 		isAlive = false;
+		if (explosion)
+		{
+			expHandle = explosion->Play(stage->GetNexus()->GetPosition(), true);
+		}
 	}
 	if (!isAlive)
 	{
+		EffectManager::Instance().Update(elapsedTime);
+
 		float smooth = 1.0f;
 		float t = 1.0f - expf(-smooth * elapsedTime);
 
 		DirectX::XMFLOAT3 eye = Camera::Instance().GetEye();
 
 		DirectX::XMFLOAT3 targetEye = stage->GetNexus()->GetPosition();
-		targetEye.y += 10.0f;
-		targetEye.z += 10.0f;
+		targetEye.y += 20.0f;
+		targetEye.z += 20.0f;
 
 		eye = Lerp(eye, targetEye, t);
 
@@ -135,33 +148,24 @@ void SceneGame::Update(float elapsedTime)
 		}
 		return;
 	}
+
 	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
 	target.y += 0.5f;
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
-	stage->Update(elapsedTime);
-	Player::Instance().Update(elapsedTime,maps);
-	EnemyManager& enemymanager = EnemyManager::Instance();
-	
-	enemymanager.Update(elapsedTime,stage->GetTower(),stage->GetNexus());
+
+	Player::Instance().Update(elapsedTime, maps);
+	if (Player::Instance().GetHitStopTimer() <= 0.0f)
+	{
+		EnemyManager& enemymanager = EnemyManager::Instance();
+		enemymanager.Update(elapsedTime, stage->GetTower(), stage->GetNexus());
+	}
 
 	EffectManager::Instance().Update(elapsedTime);
-
+	stage->Update(elapsedTime);
 	gameTimer += elapsedTime;
-
 	WaveManager::Instance().Update(elapsedTime, stage.get(), pathfinding.get());
-
 	DamegeDrawManager::Instance().Update(elapsedTime);
-
-	/*if (gameTimer > 3.0f)
-	{
-		gameTimer = 0.0f;
-		EnemySlime* slime = new EnemySlime(stage.get(), pathfinding.get());
-		slime->InitializeEnemy(stage.get(), pathfinding.get());
-		slime->SetPosition(DirectX::XMFLOAT3(1 * 2.0f, 0, 5));
-		slime->SetReady(true);
-		enemymanager.Register(slime);
-	}*/
 }
 
 // •`‰æˆ—
@@ -211,8 +215,9 @@ void SceneGame::Render()
 			if (isResultShow)
 			{
 				blackSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, resultTimer + 0.5f);
-				ResultSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, 1);
-				//fadeSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, 1);
+				resultSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, 1);
+				scoreRender::ScoreRenderDigit_NoHead_Spacing(rc, NumberSpr.get(), WaveManager::Instance().GetWaveCount(), 100, 100, resultKillPos.x, resultKillPos.y, 0, 0, 1, 1, 1.0f);
+				scoreRender::ScoreRenderDigit_NoHead_Spacing(rc, NumberSpr.get(), EnemyManager::Instance().GetKillCount(), 100, 100, resultWavePos.x, resultWavePos.y, 0, 0, 1, 1, 1.0f);
 			}
 			else
 			{
@@ -231,5 +236,14 @@ void SceneGame::DrawGUI()
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 200), ImGuiCond_Once);
 	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+	if (ImGui::Begin("SPR", nullptr, ImGuiWindowFlags_None))
+	{
+		ImGui::DragFloat2("killPos", &resultKillPos.x);
+		ImGui::DragFloat2("wavePos", &resultWavePos.x);
+
+		ImGui::End();
+	}
+	
 	WaveManager::Instance().DebugGUI();
 }

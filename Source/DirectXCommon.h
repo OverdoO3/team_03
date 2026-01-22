@@ -123,7 +123,7 @@ public:
         return sqrtf(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
     }
 
-    static inline XMFLOAT3 GetForward(const DirectX::XMFLOAT4X4& world)
+    static inline DirectX::XMFLOAT3 GetForward(const DirectX::XMFLOAT4X4& world)
     {
         using namespace DirectX;
 

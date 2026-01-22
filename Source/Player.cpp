@@ -27,7 +27,7 @@ void Player::Initialize()
 	SpearDash = std::make_unique<Effect>("Data/Effect/spear_dash/spear_dash.efk");
 	hitSE.reset(Audio::Instance().LoadAudioSource("Data/Sound/Hit.wav"));
 
-	dirModel = std::make_unique<Model>("Data/Model/Player/yazirushi.mdl");
+	dirModel = std::make_unique<Dir>();
 
 	plane = std::make_unique<Plane>();
 
@@ -49,15 +49,21 @@ void Player::Finalize()
 
 void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 {
+	if (hitStopTimer > 0.0f)
+	{
+		hitStopTimer -= elapsedTime;
+		return;
+	}
 	UpdateVelocity(elapsedTime);
 
 	CollisionPlyerVsEnemies();
 
+	dirModel->Update(position);
 	//InputMove(elapsedTime);
 
-	CollisionWeponVsEnemies();
-
 	riskAura->SetPosition(riskAuraHandle, position);
+
+	UpdateWeponCollisionFromMotion();
 
 	if (riskGauge[(int)nowWepon] > 75)
 	{
@@ -75,6 +81,20 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 	{
 	case State::Idle:
 	{
+			switch (nowWepon)
+			{
+			case HaveWepon::Axe:
+				InputCharge(elapsedTime);
+				break;
+			case HaveWepon::Spere:
+				InputRush(elapsedTime, maps);
+				break;
+			case HaveWepon::Sword:
+				break;
+			default:
+				break;
+			}
+
 		if (!isChargeRush)
 		{
 			if (InputMove(elapsedTime, maps))
@@ -84,19 +104,6 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 			}
 		}
 
-		switch (nowWepon)
-		{
-		case HaveWepon::Axe:
-			InputCharge(elapsedTime);
-			break;
-		case HaveWepon::Spere:
-			InputRush(elapsedTime, maps);
-			break;
-		case HaveWepon::Sword:
-			break;
-		default:
-			break;
-		}
 		InputAvoid();
 		InputAttack();
 		break;
@@ -109,18 +116,20 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 			PlayAnimation("idle", true);
 		}
 
-		switch (nowWepon)
 		{
-		case HaveWepon::Axe:
-			InputCharge(elapsedTime);
-			break;
-		case HaveWepon::Spere:
-			InputRush(elapsedTime, maps);
-			break;
-		case HaveWepon::Sword:
-			break;
-		default:
-			break;
+			switch (nowWepon)
+			{
+			case HaveWepon::Axe:
+				InputCharge(elapsedTime);
+				break;
+			case HaveWepon::Spere:
+				InputRush(elapsedTime, maps);
+				break;
+			case HaveWepon::Sword:
+				break;
+			default:
+				break;
+			}
 		}
 		InputAvoid();
 		InputAttack();
@@ -140,7 +149,9 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 			chargeValue = 1.0f;
 			chargeTime = 0.0f;
 			chargestil = 1.0f;
-			
+
+			rushDist = 0.0f;
+			isChargeRush = false;
 			state = State::Idle;
 			PlayAnimation("idle", true);
 		}
@@ -149,17 +160,27 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 
 	case State::Attack:
 	{
-		if (!animationPlaying)
+		if (animationPlaying)
 		{
+			weponCol->SetTimer(0.2f);
+			weponCol->SetIsAttack(true);
+		}
+		else
+		{
+			weponCol->SetIsAttack(false);
 			state = State::Idle;
 			PlayAnimation("idle", true);
 			break;
 		}
+
 		if (InputMove(elapsedTime, maps))
 		{
 			state = State::Run;
+			weponCol->SetIsAttack(false);
 			PlayAnimation("walk", true);
+			break;
 		}
+		
 		InputAttack();
 		InputRush(elapsedTime, maps);
 		
@@ -200,6 +221,7 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 			chargestil = 1.0f;
 			weponCol->SetRadius(1.0f);
 			state = State::Idle;
+			PlayAnimation("idle", true);
 		}
 	}
 	}
@@ -222,6 +244,8 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 	// トランスフォーム更
 	model->UpdateTransform();
 
+	CollisionWeponVsEnemies();
+
 	UpdateTransform();
 
 	UpdateAnimation(elapsedTime);
@@ -233,8 +257,8 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 
 void Player::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
-	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);
-	renderer->Render(rc, transform, dirModel.get(), ShaderId::Lambert);
+	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);;
+	dirModel->Render(rc, renderer);
 	plane->Render(rc, renderer);
 }
 
@@ -243,7 +267,8 @@ void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* render
 	//基底クラスの関数呼び出し
 	Character::RenderDebugPrimitive(rc, renderer);
 
-	weponCol->RenderDebugPrimitive(rc, renderer);
+	renderer->RenderSphere(rc, WeponRootPos, 1.0f, { 1,1,1,1 });
+	renderer->RenderSphere(rc, WeponTipPos, 1.0f, { 0,0,1,1 });
 }
 
 void Player::InputAttack()
@@ -280,30 +305,8 @@ void Player::InputAttack()
 			angle.y = atan2f(-dx, -dz); // ※向きによって順番調整
 		}
 
-		DirectX::XMFLOAT3 dir;
-		dir.x = sinf(angle.y) * 2;
-		dir.y = 0.0f;
-		dir.z = cosf(angle.y) * 2;
-
-		DirectX::XMFLOAT3 pos;
-		pos.x = position.x;
-		pos.y = position.y + 0.8f;
-		pos.z = position.z;
-
-		weponCol->SetPosition({ pos.x + dir.x ,pos.y + dir.y ,pos.z + dir.z });
-		weponCol->SetRadius(1.0f);
-		weponCol->SetIsAttack(true);
-		weponCol->SetTimer(0.2f);
-
 		state = State::Attack;
 		PlayAnimation("attack", false);
-
-		DirectX::XMFLOAT3 p = position;
-		p.y = position.y + 1.0f;
-		//WeponTrailEffect->Play(p, 1.0f);
-		DirectX::XMFLOAT3 a = angle;
-		a.x = DirectX::XM_PI / 2;
-		weponCol->SetAngle(a);
 	}
 }
 
@@ -325,6 +328,7 @@ void Player::InputRush(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 	DirectX::XMFLOAT3 vec{};
 	if (KeyInput::Instance().GetKeyHold(VK_RBUTTON))
 	{
+		weponCol->SetIsAttack(false);
 		DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(), 0);
 		DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(), 1.0f);
 
@@ -517,6 +521,80 @@ void Player::ChangeWepon()
 	KeyInput::Instance().Update();
 }
 
+void Player::UpdateWeponCollisionFromMotion()
+{
+	
+	switch (nowWepon)
+	{
+	case Player::HaveWepon::Sword:
+		for (auto& node : model->GetNodes())
+		{
+			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4(&node.globalTransform);
+			DirectX::XMMATRIX playerWorld = DirectX::XMLoadFloat4x4(&transform);
+			DirectX::XMMATRIX worldMat = local * playerWorld;
+			if (strcmp(node.name, "pasted__pCube24") == 0)
+			{
+				WeponTipPos.x = worldMat.r[3].m128_f32[0];
+				WeponTipPos.y = worldMat.r[3].m128_f32[1];
+				WeponTipPos.z = worldMat.r[3].m128_f32[2];
+			}
+
+			if (strcmp(node.name, "pasted__L_hand") == 0)
+			{
+				WeponRootPos.x = worldMat.r[3].m128_f32[0];
+				WeponRootPos.y = worldMat.r[3].m128_f32[1];
+				WeponRootPos.z = worldMat.r[3].m128_f32[2];
+			}
+		}
+		break;
+	case Player::HaveWepon::Axe:
+		for (auto& node : model->GetNodes())
+		{
+			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4(&node.globalTransform);
+			DirectX::XMMATRIX playerWorld = DirectX::XMLoadFloat4x4(&transform);
+			DirectX::XMMATRIX worldMat = local * playerWorld;
+			if (strcmp(node.name, "pasted__pCube25") == 0)
+			{
+				WeponTipPos.x = worldMat.r[3].m128_f32[0];
+				WeponTipPos.y = worldMat.r[3].m128_f32[1];
+				WeponTipPos.z = worldMat.r[3].m128_f32[2];
+			}
+
+			if (strcmp(node.name, "pasted__L_hand") == 0)
+			{
+				WeponRootPos.x = worldMat.r[3].m128_f32[0];
+				WeponRootPos.y = worldMat.r[3].m128_f32[1];
+				WeponRootPos.z = worldMat.r[3].m128_f32[2];
+			}
+		}
+		break;
+	case Player::HaveWepon::Spere:
+		for (auto& node : model->GetNodes())
+		{
+			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4(&node.globalTransform);
+			DirectX::XMMATRIX playerWorld = DirectX::XMLoadFloat4x4(&transform);
+			DirectX::XMMATRIX worldMat = local * playerWorld;
+			if (strcmp(node.name,"pasted__pasted__yari") == 0)
+			{
+				WeponTipPos.x = worldMat.r[3].m128_f32[0];
+				WeponTipPos.y = worldMat.r[3].m128_f32[1];
+				WeponTipPos.z = worldMat.r[3].m128_f32[2];
+			}
+
+			if (strcmp(node.name, "pasted__pasted__L_hand") == 0)
+			{
+				WeponRootPos.x = worldMat.r[3].m128_f32[0];
+				WeponRootPos.y = worldMat.r[3].m128_f32[1];
+				WeponRootPos.z = worldMat.r[3].m128_f32[2];
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	WeponTipPos.y = 0.5f;
+}
+
 bool Player::InputMove(float elapsedTime,const int(&maps)[WIDTH][HEIGHT])
 {
 	DirectX::XMFLOAT3 moveVec = GetMoveVec();
@@ -594,7 +672,7 @@ void Player::CollisionWeponVsEnemies()
 
 		if (attacking)
 		{
-			hitNow = Collision::CapsuleVsSphere(position, WeponTipPos, 1.0f, enemy->GetPosition(), 1.0f);
+			hitNow = Collision::CapsuleVsSphere(WeponRootPos, WeponTipPos, 1.0f, enemy->GetPosition(), 1.0f);
 		}
 
 		if (hitNow && !enemy->wasHit)
@@ -643,13 +721,23 @@ void Player::CollisionWeponVsEnemies()
 			switch (nowWepon)
 			{
 			case Player::HaveWepon::Sword:
-				riskAdd = 3; 
+				riskAdd = 3;
+				hitStopTimer = 0.02f;
 				break;
 			case Player::HaveWepon::Axe:
 				riskAdd = 6 * chargeValue;
+				if (chargeValue == 1)
+				{
+					hitStopTimer = 0.05f;
+				}
+				else
+				{
+					hitStopTimer = 0.08f;
+				}
 				break;
 			case Player::HaveWepon::Spere:
 				riskAdd = 2;
+				hitStopTimer = 0.01f;
 				break;
 			}
 
@@ -715,6 +803,8 @@ void Player::DrawDebugGUI()
 		ImGui::DragInt("SwordRisk", &riskGauge[0]);
 		ImGui::DragInt("AxeRisk", &riskGauge[1]);
 		ImGui::DragInt("SpareRisk", &riskGauge[2]);
+
+		ImGui::DragFloat3("WeponTipPos", &WeponTipPos.x);
 
 		ImGui::End();
 	}

@@ -8,6 +8,8 @@ Tower::Tower()
 	UpdateTransfomEuler();
 
 	PlayAnimation("tower_anime", true);
+
+	explosion = std::make_unique<Effect>("Data/Effect/explosion/explosion.efk");
 }
 
 Tower::~Tower()
@@ -19,6 +21,16 @@ void Tower::Update(float elapsedTime)
 	if (HP > 0)
 	{
 		UpdateAnimation(elapsedTime);
+	}
+	else
+	{
+		if (expHandle == -1)
+		{
+			DirectX::XMFLOAT3 pos = position;
+			pos.y += 1.0f;
+			expHandle = explosion->Play({ pos}, true);
+			explosion->SetScale(expHandle, { 0.2f,0.2f,0.2f });
+		}
 	}
 }
 

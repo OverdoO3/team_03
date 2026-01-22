@@ -1,6 +1,9 @@
 #pragma once
 #include "System/Sprite.h"
 #include "Scene.h"
+#include "tower.h"
+#include "CameraController.h"
+#include "Camera.h"
 
 class SceneTitle : public Scene
 {
@@ -25,5 +28,10 @@ public:
 private:
 	std::unique_ptr<Sprite> sprite = nullptr;
 	std::unique_ptr<Sprite> sprUI = nullptr;
+
+	std::unique_ptr<Tower>tower = nullptr;
+
+	std::unique_ptr<CameraController> cameraController = nullptr;
+
 	int mousec=0;
 };

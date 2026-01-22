@@ -40,6 +40,8 @@ public:
 	bool ApplyDamage(int damage, float invincibleTime);
 
 	int GetHP() { return health; }
+
+	DirectX::XMFLOAT4X4& GetTransform() { return transform; }
 protected:
 	DirectX::XMFLOAT3   position = { 0,0,0 };
 	DirectX::XMFLOAT3   angle = { 0,0,0 };

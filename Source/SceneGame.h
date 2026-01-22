@@ -47,8 +47,15 @@ private:
 	std::unique_ptr<Sprite> blackSpr;
 
 	std::unique_ptr<Sprite> fadeSpr;
+	std::unique_ptr<Sprite> resultSpr;
 
-	std::unique_ptr<Sprite> ResultSpr;
+	std::unique_ptr<Sprite> NumberSpr;
+
+	XMFLOAT2 resultKillPos = { 650,340 };
+	XMFLOAT2 resultWavePos = { 650,600 };
+
+	std::unique_ptr<Effect> explosion;
+	Effekseer::Handle expHandle;
 
 	int killCount = 0;
 	int waveCount = 0;
