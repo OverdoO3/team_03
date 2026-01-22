@@ -2,11 +2,11 @@
 #include "System/Sprite.h"
 #include "Scene.h"
 
-class SceneTitle : public Scene
+class SceneTutorial : public Scene
 {
 public:
-	SceneTitle() {}
-	~SceneTitle() override {}
+	SceneTutorial() {}
+	~SceneTutorial() override {}
 
 	//èâä˙âª
 	void Initialize() override;
@@ -23,9 +23,7 @@ public:
 	//GUIï`âÊ
 	void DrawGUI() override;
 private:
-	std::unique_ptr<Sprite> sprite = nullptr;
-	std::unique_ptr<Sprite> sprUI = nullptr;
 	std::unique_ptr<Sprite> spr = nullptr;
 
-	int mousec=0;
+	int c = 0;
 };

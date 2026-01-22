@@ -261,6 +261,9 @@
     <ClInclude Include="Source\Player.h">
       <Filter>Source\Chara</Filter>
     </ClInclude>
+    <ClInclude Include="Source\SceneTutorial.h">
+      <Filter>Source\Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -415,6 +418,9 @@
     </ClCompile>
     <ClCompile Include="Source\OncollisionWepon.cpp">
       <Filter>Source\Chara</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SceneTutorial.cpp">
+      <Filter>Source\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

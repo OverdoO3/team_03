@@ -32,6 +32,8 @@ public:
 
 	void Render(const RenderContext& rc, ModelRenderer* renderer);
 
+	void RenderUI(const RenderContext& rc);
+
 	void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer);
 
 	void CollisionWeponVsEnemies();
@@ -64,6 +66,12 @@ private:
 	std::unique_ptr<AudioSource> hitSE = nullptr;
 
 	std::unique_ptr<OnCollisionWepon> col = nullptr;
+
+	std::unique_ptr<Sprite> sprHP = nullptr;
+	std::unique_ptr<Sprite> sprtower= nullptr;
+	std::unique_ptr<Sprite> sprRisuku = nullptr;
+	std::unique_ptr<Sprite> sprwepon = nullptr;
+	std::unique_ptr<Sprite> sprnumber = nullptr;
 
 	Stage* stage;
 	bool wasPressed = false;
