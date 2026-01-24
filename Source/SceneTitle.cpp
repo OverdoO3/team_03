@@ -37,7 +37,7 @@ void SceneTitle::Update(float elapsedTime)
 	mousec = 0;
 	if (mouse.GetOldPositionX() > 730 && mouse.GetOldPositionX() < 1130)
 	{
-		if (mouse.GetOldPositionY() > 500 && mouse.GetOldPositionY() < 600)
+		if (mouse.GetOldPositionY() > 450 && mouse.GetOldPositionY() < 550)
 		{
 			mousec = 1;
 			if (GetAsyncKeyState(VK_LBUTTON))
@@ -45,16 +45,24 @@ void SceneTitle::Update(float elapsedTime)
 				SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
 			}
 		}
-		if (mouse.GetOldPositionY() > 650 && mouse.GetOldPositionY() < 750)
+		if (mouse.GetOldPositionY() > 600 && mouse.GetOldPositionY() < 700)
 		{
 			mousec = 2;
 		}
-		if (mouse.GetOldPositionY() > 800 && mouse.GetOldPositionY() < 900)
+		if (mouse.GetOldPositionY() > 750 && mouse.GetOldPositionY() < 850)
 		{
 			mousec = 4;
 			if (GetAsyncKeyState(VK_LBUTTON))
 			{
 				SceneManager::Instance().ChangeScene(new SceneTutorial);
+			}
+		}
+		if (mouse.GetOldPositionY() > 900 && mouse.GetOldPositionY() < 1000)
+		{
+			mousec = 8;
+			if (GetAsyncKeyState(VK_LBUTTON))
+			{
+				PostQuitMessage(0);
 			}
 		}
 	}
@@ -81,9 +89,10 @@ void SceneTitle::Render()
 			530, 100, 0, 800, 300,
 			0,
 			1, 1, 1, 1);
-		sprUI->Render(rc, 730, 500, 0, 400, 100, 800-800 * (mousec % 2), 0, 800, 200, 0, 1, 1, 1, 1);
-		sprUI->Render(rc, 730, 650, 0, 400, 100, 800-800 * ( mousec%4/2), 200, 800, 200, 0, 1, 1, 1, 1);
-		sprUI->Render(rc, 730, 800, 0, 400, 100, 800-800 * ( mousec/4), 400, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 450, 0, 400, 100, 800-800 * (mousec % 2), 0, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 600, 0, 400, 100, 800-800 * ( mousec/2%2), 200, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 750, 0, 400, 100, 800-800 * ( mousec/4%2), 400, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 900, 0, 400, 100, 800-800 * ( mousec/8),  600, 800, 200, 0, 1, 1, 1, 1);
 
 	}
 }
