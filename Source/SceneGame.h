@@ -27,10 +27,19 @@ public:
 
 	// GUI•`‰æ
 	void DrawGUI() override;
+
+	void POSE();
 private:
 	std::unique_ptr<Stage> stage = nullptr;
 
 	//std::unique_ptr<Player> player = nullptr;
 
 	std::unique_ptr<CameraController> cameraController = nullptr;
+
+	std::unique_ptr<Sprite> sprite = nullptr;
+	std::unique_ptr<Sprite> sprUI = nullptr;
+
+	bool pose;
+	int mousec = 0;
+
 };

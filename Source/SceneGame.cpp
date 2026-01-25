@@ -1,10 +1,14 @@
 #include "System/Graphics.h"
+#include "System/Input.h"
 #include "Camera.h"
 #include "SceneGame.h"
 #include "EnemyManager.h"
 #include "EnemySlime.h"
 #include "Player.h"
 #include "EffectManager.h"
+#include "SceneManager.h"
+#include "SceneLoading.h"
+#include "SceneTitle.h"
 // 初期化
 void SceneGame::Initialize()
 {
@@ -40,6 +44,9 @@ void SceneGame::Initialize()
 	}
 
 	Player::Instance().setStage(stage.get());
+	sprite = std::make_unique<Sprite>("Data/Sprite/POSE.png");
+	sprUI = std::make_unique<Sprite>("Data/Sprite/POSE_UI.png");
+	pose = false;
 }
 // 終了化
 void SceneGame::Finalize()
@@ -51,6 +58,16 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
+	GamePad& gamePad = Input::Instance().GetGamePad();
+	if (gamePad.GetButtonDown() & GamePad::BTN_X)
+	{
+		pose = true;
+	}
+	if (pose)
+	{
+		POSE();
+		return;
+	}
 	//DirectX::XMFLOAT3 target = player->GetPosition();]
 	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
 	target.y += 0.5f;
@@ -104,7 +121,16 @@ void SceneGame::Render()
 	// 2Dスプライト描画
 	{
 		Player::Instance().RenderUI(rc);
-		
+		if (pose)
+		{
+			sprite->Render(rc,
+				0, 0, 0, 1920, 1080,
+				0,
+				1, 1, 1, 1);
+			sprUI->Render(rc, 100, 900, 0, 400, 100, 800 - 800 * (mousec % 2), 0, 800, 200, 0, 1, 1, 1, 1);
+			sprUI->Render(rc, 1400, 900, 0, 400, 100, 800 - 800 * (mousec / 2 % 2), 200, 800, 200, 0, 1, 1, 1, 1);
+			
+		}
 	}
 }
 
@@ -113,4 +139,33 @@ void SceneGame::DrawGUI()
 {
 	//player->DrawDebugGUI();
 	Player::Instance().DrawDebugGUI();
+}
+
+void SceneGame::POSE()
+{
+	
+
+	Mouse& mouse = Input::Instance().GetMouse();
+	mousec = 0;
+	if (mouse.GetOldPositionY() > 900 && mouse.GetOldPositionY() < 1000)
+	{
+		if (mouse.GetOldPositionX() > 100 && mouse.GetOldPositionX() < 500)
+		{
+			mousec = 1;
+			if (GetAsyncKeyState(VK_LBUTTON))
+			{
+				pose = false;
+			}
+		}
+		if (mouse.GetOldPositionX() > 1400 && mouse.GetOldPositionX() < 1800)
+		{
+			mousec = 2;
+			if (GetAsyncKeyState(VK_LBUTTON))
+			{
+				SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
+			}
+			
+		}
+		
+	}
 }
