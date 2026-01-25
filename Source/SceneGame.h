@@ -5,7 +5,7 @@
 #include "CameraController.h"
 #include <wrl.h>
 #include <windows.h>
-
+#include "System/Audio.h"
 // ÉQÅ[ÉÄÉVÅ[Éì
 class SceneGame : public Scene
 {
@@ -38,7 +38,8 @@ private:
 
 	std::unique_ptr<Sprite> sprite = nullptr;
 	std::unique_ptr<Sprite> sprUI = nullptr;
-
+	AudioSource* BGMp = nullptr;
+	AudioSource* SE = nullptr;
 	bool pose;
 	int mousec = 0;
 

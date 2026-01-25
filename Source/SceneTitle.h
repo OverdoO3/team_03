@@ -1,5 +1,7 @@
 #pragma once
 #include "System/Sprite.h"
+#include "System/Audio.h"
+
 #include "Scene.h"
 
 class SceneTitle : public Scene
@@ -26,6 +28,8 @@ private:
 	std::unique_ptr<Sprite> sprite = nullptr;
 	std::unique_ptr<Sprite> sprUI = nullptr;
 	std::unique_ptr<Sprite> spr = nullptr;
+	AudioSource* SE = nullptr;
+	AudioSource* BGM = nullptr;
 
 	int mousec=0;
 };
