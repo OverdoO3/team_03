@@ -47,12 +47,19 @@ void SceneGame::Initialize()
 	sprite = std::make_unique<Sprite>("Data/Sprite/POSE.png");
 	sprUI = std::make_unique<Sprite>("Data/Sprite/POSE_UI.png");
 	pose = false;
+	SE = Audio::Instance().LoadAudioSource("Data/Sound/システム決定音_10_2.wav");
+	BGMp = Audio::Instance().LoadAudioSource("Data/Sound/プレイ画面＿BGM.wav");
+	BGMp->Play(true);
 }
 // 終了化
 void SceneGame::Finalize()
 {
 	Player::Instance().Finalize();
 	EnemyManager& enemymanager = EnemyManager::Instance();
+	SE->Stop();
+	BGMp->Stop();
+	delete SE;
+	delete BGMp;
 }
 
 // 更新処理
@@ -62,6 +69,7 @@ void SceneGame::Update(float elapsedTime)
 	if (gamePad.GetButtonDown() & GamePad::BTN_X)
 	{
 		pose = true;
+		BGMp->Stop();
 	}
 	if (pose)
 	{
@@ -147,6 +155,11 @@ void SceneGame::POSE()
 
 	Mouse& mouse = Input::Instance().GetMouse();
 	mousec = 0;
+	if (GetAsyncKeyState(VK_LBUTTON))
+	{
+		SE->Stop();
+		SE->Play(false);
+	}
 	if (mouse.GetOldPositionY() > 900 && mouse.GetOldPositionY() < 1000)
 	{
 		if (mouse.GetOldPositionX() > 100 && mouse.GetOldPositionX() < 500)
@@ -155,6 +168,7 @@ void SceneGame::POSE()
 			if (GetAsyncKeyState(VK_LBUTTON))
 			{
 				pose = false;
+				BGMp->Play(true);
 			}
 		}
 		if (mouse.GetOldPositionX() > 1400 && mouse.GetOldPositionX() < 1800)

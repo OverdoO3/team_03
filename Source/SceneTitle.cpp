@@ -11,12 +11,18 @@ void SceneTitle::Initialize()
 	//スプライト初期化
 	sprite = std::make_unique<Sprite>("Data/Sprite/title_font_UI.png");
 	sprUI = std::make_unique<Sprite>("Data/Sprite/title_UI.png");
-	
-
+	SE = Audio::Instance().LoadAudioSource("Data/Sound/システム決定音_10_2.wav");
+	BGM= Audio::Instance().LoadAudioSource("Data/Sound/タイトル＿BGM.wav");
+	BGM->Play(true);
 }
 
 void SceneTitle::Finalize()
 {
+	SE->Stop();
+	BGM->Stop();
+	delete SE;
+	delete BGM;
+
 }
 
 void SceneTitle::Update(float elapsedTime)
@@ -32,6 +38,11 @@ void SceneTitle::Update(float elapsedTime)
 	if (gamePad.GetButtonDown() & anyButton)
 	{
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
+	}
+	if (GetAsyncKeyState(VK_LBUTTON))
+	{
+		SE->Stop();
+		SE->Play(false);
 	}
 	Mouse& mouse = Input::Instance().GetMouse();
 	mousec = 0;
