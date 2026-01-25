@@ -11,7 +11,7 @@ EnemyMelee::EnemyMelee(Stage* map, Pathfinding* pf, std::shared_ptr<Model> mod, 
 
 	InitializeEnemy(map, pf);
 
-	scale.x = scale.y = scale.z = 0.05f;
+	scale.x = scale.y = scale.z = 0.01f;
 	radius = 0.5f;
 	height = 1.0f;
 
@@ -19,7 +19,10 @@ EnemyMelee::EnemyMelee(Stage* map, Pathfinding* pf, std::shared_ptr<Model> mod, 
 
 	health = 100;
 
+	PlayAnimation("walk", true);
+
 	UpdateTransform();
+	model->UpdateTransform();
 }
 
 EnemyMelee::~EnemyMelee()
@@ -41,10 +44,10 @@ void EnemyMelee::Update(float elapsedTime)
 	{
 	case EnemyMelee::State::Wander:
 		UpdateEnemy(elapsedTime, targetTower);
-
 		if (dist < meleeAttackCanRange || tdist < meleeAttackCanRange)
 		{
 			state = State::Attack;
+			PlayAnimation("attack", false);
 			stateTimer = 1.0f;
 		}
 		break;
@@ -54,6 +57,7 @@ void EnemyMelee::Update(float elapsedTime)
 		{
 			enemyWepon.SetIsAttack(false);
 			state = State::Wander;
+			PlayAnimation("walk", true);
 		}
 		break;
 	}
@@ -65,6 +69,8 @@ void EnemyMelee::Update(float elapsedTime)
 	UpdateInvincibleTimer(elapsedTime);
 
 	UpdateVelocity(elapsedTime);
+
+	UpdateAnimation(elapsedTime);
 }
 
 void EnemyMelee::Render(const RenderContext& rc, ModelRenderer* renderer)

@@ -20,6 +20,7 @@ EnemyCharge::EnemyCharge(Stage* map, Pathfinding* pf, std::shared_ptr<Model> mod
 	health = 100;
 
 	UpdateTransform();
+	model->UpdateTransform();
 
 	plane->SetType(3);
 }

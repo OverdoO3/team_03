@@ -70,7 +70,7 @@ void SceneGame::Initialize()
 				{
 					DirectX::XMFLOAT3 pos;
 					pos = stage->GridToWorld(x, y);
-					WaveManager::Instance().MakeSpawnPoint(pos,0);
+					WaveManager::Instance().MakeSpawnPoint(pos,rand() % 3);
 				}
 				if (maps[x][y] == 4)
 				{

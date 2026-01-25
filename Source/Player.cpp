@@ -180,14 +180,14 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 			break;
 		}
 
-		if (InputMove(elapsedTime, maps))
+		/*if (InputMove(elapsedTime, maps))
 		{
 			state = State::Run;
 			weponCol->SetIsAttack(false);
 			PlayAnimation("walk", true);
 			break;
 		}
-		
+		*/
 		InputAttack();
 		InputRush(elapsedTime, maps);
 		
@@ -358,6 +358,7 @@ void Player::InputRush(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 	if (KeyInput::Instance().GetKeyHold(VK_RBUTTON))
 	{
 		weponCol->SetIsAttack(false);
+		PlayAnimation("charge", false);
 		DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(), 0);
 		DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(), 1.0f);
 
@@ -413,7 +414,7 @@ void Player::InputRush(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 		ang.y -= DirectX::XM_PI;
 		SpearDash->SetAngle(SpearDashHandle, ang);
 		SpearDash->SetScale(SpearDashHandle, { rushDist * 0.5f,1.0f,1.0f });
-		PlayAnimation("Attack", false);
+		PlayAnimation("chargeattack", false);
 	}
 }
 
@@ -425,6 +426,7 @@ void Player::InputCharge(float elapsedTime)
 	if (KeyInput::Instance().GetKeyHold(VK_RBUTTON))
 	{
 		state = State::Charge;
+		PlayAnimation("charge",false);
 		DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(), 0);
 		DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(), 1.0f);
 
@@ -493,7 +495,7 @@ void Player::InputCharge(float elapsedTime)
 		weponCol->SetIsCharge(false);
 		weponCol->SetIsAttack(true);
 		weponCol->SetTimer(0.2f);
-		PlayAnimation("attack", false);
+		PlayAnimation("chargeattack", false);
 	}
 }
 
@@ -561,7 +563,7 @@ void Player::UpdateWeponCollisionFromMotion()
 			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4(&node.globalTransform);
 			DirectX::XMMATRIX playerWorld = DirectX::XMLoadFloat4x4(&transform);
 			DirectX::XMMATRIX worldMat = local * playerWorld;
-			if (strcmp(node.name, "pasted__pCube24") == 0)
+			if (strcmp(node.name, "joint3") == 0)
 			{
 				WeponTipPos.x = worldMat.r[3].m128_f32[0];
 				WeponTipPos.y = worldMat.r[3].m128_f32[1];
@@ -582,7 +584,7 @@ void Player::UpdateWeponCollisionFromMotion()
 			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4(&node.globalTransform);
 			DirectX::XMMATRIX playerWorld = DirectX::XMLoadFloat4x4(&transform);
 			DirectX::XMMATRIX worldMat = local * playerWorld;
-			if (strcmp(node.name, "pasted__pCube25") == 0)
+			if (strcmp(node.name, "joint3") == 0)
 			{
 				WeponTipPos.x = worldMat.r[3].m128_f32[0];
 				WeponTipPos.y = worldMat.r[3].m128_f32[1];
@@ -603,7 +605,7 @@ void Player::UpdateWeponCollisionFromMotion()
 			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4(&node.globalTransform);
 			DirectX::XMMATRIX playerWorld = DirectX::XMLoadFloat4x4(&transform);
 			DirectX::XMMATRIX worldMat = local * playerWorld;
-			if (strcmp(node.name,"pasted__pasted__yari") == 0)
+			if (strcmp(node.name,"joint3") == 0)
 			{
 				WeponTipPos.x = worldMat.r[3].m128_f32[0];
 				WeponTipPos.y = worldMat.r[3].m128_f32[1];
@@ -621,7 +623,7 @@ void Player::UpdateWeponCollisionFromMotion()
 	default:
 		break;
 	}
-	WeponTipPos.y = 0.5f;
+	WeponTipPos.y = 3.0f;
 }
 
 bool Player::InputMove(float elapsedTime,const int(&maps)[WIDTH][HEIGHT])

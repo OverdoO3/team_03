@@ -245,7 +245,6 @@
     <ClInclude Include="Source\Plane.h" />
     <ClInclude Include="Source\ScoreRender.h" />
     <ClInclude Include="Source\SpawnPoint.h" />
-    <ClInclude Include="Source\SpecialAttack.h" />
     <ClInclude Include="Source\tower.h" />
     <ClInclude Include="Source\TrailMesh.h" />
     <ClInclude Include="Source\WaveManager.h" />
