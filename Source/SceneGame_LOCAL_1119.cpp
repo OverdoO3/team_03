@@ -1,5 +1,4 @@
 #include "System/Graphics.h"
-#include "System/Input.h"
 #include "Camera.h"
 #include "SceneGame.h"
 #include "EnemyManager.h"
@@ -49,12 +48,10 @@ void SceneGame::Initialize()
 	blackSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
 	fadeSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
 	resultSpr = std::make_unique<Sprite>("Data/Sprite/game_result_backgraund.png");
-	deadText = std::make_unique<Sprite>("Data/Sprite/dead_text.png");
-	deadCount = std::make_unique<Sprite>("Data/Sprite/count_down.png");
+
 	NumberSpr = std::make_unique<Sprite>("Data/Sprite/number_UI2.png");
 
 	explosion = std::make_unique<Effect>("Data/Effect/explosion/explosion.efk");
-
 
 	if (count > 0) return;
 
@@ -86,9 +83,8 @@ void SceneGame::Initialize()
 	}
 	count++;
 	Player::Instance().setStage(stage.get());
-	sprite = std::make_unique<Sprite>("Data/Sprite/POSE.png");
-	sprUI = std::make_unique<Sprite>("Data/Sprite/POSE_UI.png");
-	pose = false;
+
+
 }
 // 終了化
 void SceneGame::Finalize()
@@ -153,17 +149,6 @@ void SceneGame::Update(float elapsedTime)
 		return;
 	}
 
-	GamePad& gamePad = Input::Instance().GetGamePad();
-	if (gamePad.GetButtonDown() & GamePad::BTN_X)
-	{
-		pose = true;
-	}
-	if (pose)
-	{
-		POSE();
-		return;
-	}
-	//DirectX::XMFLOAT3 target = player->GetPosition();]
 	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
 	target.y += 0.5f;
 	cameraController->SetTarget(target);
@@ -212,13 +197,13 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
-		//Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
-		////エネミーデバッグプリミティブ
-		//EnemyManager::Instance().RenderDebugPrimitive(rc,shapeRenderer);
+		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
+		//エネミーデバッグプリミティブ
+		EnemyManager::Instance().RenderDebugPrimitive(rc,shapeRenderer);
 
-		//stage->DebugDrawGrid(rc, shapeRenderer,modelRenderer);
+		stage->DebugDrawGrid(rc, shapeRenderer,modelRenderer);
 
-		//WaveManager::Instance().RenderDebugPrimitive(rc, shapeRenderer);
+		WaveManager::Instance().RenderDebugPrimitive(rc, shapeRenderer);
 	}
 
 	// 2Dスプライト描画
@@ -240,30 +225,15 @@ void SceneGame::Render()
 				towerBreakSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, resultTimer);
 			}
 		}
-		if (Player::Instance().GetIsDead())
-		{
-			deadText->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, 1);
-			scoreRender::ScoreRenderDigit_NoHead_Spacing(rc, deadCount.get(), Player::Instance().GetRespawnTimer(), 100, 100, 1175, 620, 0, 0, 1, 1, 1);
-		}
-
 		Player::Instance().RenderUI(rc);
-		if (pose)
-		{
-			sprite->Render(rc,
-				0, 0, 0, 1920, 1080,
-				0,
-				1, 1, 1, 1);
-			sprUI->Render(rc, 100, 900, 0, 400, 100, 800 - 800 * (mousec % 2), 0, 800, 200, 0, 1, 1, 1, 1);
-			sprUI->Render(rc, 1400, 900, 0, 400, 100, 800 - 800 * (mousec / 2 % 2), 200, 800, 200, 0, 1, 1, 1, 1);
-			
-		}
+		
 	}
 }
 
 // GUI描画
 void SceneGame::DrawGUI()
 {
-	/*Player::Instance().DrawDebugGUI();
+	Player::Instance().DrawDebugGUI();
 	stage->DrawDebugGUI();
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 200), ImGuiCond_Once);
@@ -277,32 +247,5 @@ void SceneGame::DrawGUI()
 		ImGui::End();
 	}
 	
-	WaveManager::Instance().DebugGUI();*/
-}
-
-void SceneGame::POSE()
-{
-	Mouse& mouse = Input::Instance().GetMouse();
-	mousec = 0;
-	if (mouse.GetOldPositionY() > 900 && mouse.GetOldPositionY() < 1000)
-	{
-		if (mouse.GetOldPositionX() > 100 && mouse.GetOldPositionX() < 500)
-		{
-			mousec = 1;
-			if (GetAsyncKeyState(VK_LBUTTON))
-			{
-				pose = false;
-			}
-		}
-		if (mouse.GetOldPositionX() > 1400 && mouse.GetOldPositionX() < 1800)
-		{
-			mousec = 2;
-			if (GetAsyncKeyState(VK_LBUTTON))
-			{
-				SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
-			}
-			
-		}
-		
-	}
+	WaveManager::Instance().DebugGUI();
 }

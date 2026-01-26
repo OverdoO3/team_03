@@ -176,6 +176,8 @@ bool Character::MoveTowards(const DirectX::XMFLOAT3& target, float speed, float 
 
 	position.x += nx * step;
 	position.z += nz * step;
+
+	position.y = 0.0f;
 	return false;
 }
 

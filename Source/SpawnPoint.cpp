@@ -17,10 +17,10 @@ SpawnPoint::~SpawnPoint()
 {
 }
 
-void SpawnPoint::Update(float elapsedTime, Stage* stage, Pathfinding* path)
+void SpawnPoint::Update(float elapsedTime, Stage* stage, Pathfinding* path,int waveCount)
 {
 	timer += elapsedTime;
-	if (timer > info.interval && count < info.count)
+	if (timer > info.interval && count < info.count * waveCount)
 	{
 		timer = 0.0f;
 		SpawnEnemy(stage,path);
@@ -30,15 +30,16 @@ void SpawnPoint::Update(float elapsedTime, Stage* stage, Pathfinding* path)
 void SpawnPoint::SpawnEnemy(Stage* stage, Pathfinding* path)
 {
 	Enemy* enemy;
-	switch (info.type)
+	int a = rand() % 2;
+	switch (a)
 	{
-	case Enemy::EnemyType::Melee:
+	case 0:
 		enemy = new EnemyMelee(stage, path,enemyMeleeModel,hitEffect);
 		enemy->SetPosition(position);
 		enemy->SetReady(true);
 		EnemyManager::Instance().Register(enemy);
 		break;
-	case Enemy::EnemyType::Ranged:
+	case 1:
 		enemy = new EnemyCharge(stage, path,enemyRangeModel,hitEffect,beamEffect);
 		enemy->SetPosition(position);
 		enemy->SetReady(true);
@@ -49,9 +50,9 @@ void SpawnPoint::SpawnEnemy(Stage* stage, Pathfinding* path)
 	count++;
 }
 
-bool SpawnPoint::isFinish()
+bool SpawnPoint::isFinish(int waveCount)
 {
-	if (count == info.count)
+	if (count == info.count * waveCount)
 	{
 		count = 0;
 		return true;

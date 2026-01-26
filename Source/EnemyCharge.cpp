@@ -11,13 +11,13 @@ EnemyCharge::EnemyCharge(Stage* map, Pathfinding* pf, std::shared_ptr<Model> mod
 
 	InitializeEnemy(map, pf);
 
-	scale.x = scale.y = scale.z = 0.05f;
+	scale.x = scale.y = scale.z = 0.02f;
 	radius = 0.5f;
 	height = 1.0f;
 
 	type = EnemyType::Melee;
 
-	health = 100;
+	health = 30;
 
 	UpdateTransform();
 	model->UpdateTransform();
@@ -46,8 +46,8 @@ void EnemyCharge::Update(float elapsedTime)
 	switch (state)
 	{
 	case EnemyCharge::State::Wander:
-
 		UpdateEnemy(elapsedTime, targetTower);
+
 		if (dist < rangedAttackCanRange || tdist < rangedAttackCanRange)
 		{
 			state = State::Charge;
@@ -96,6 +96,7 @@ void EnemyCharge::Update(float elapsedTime)
 		}
 		break;
 	}
+	position.y = 0.0f;
 
 	UpdateTransform();
 
@@ -186,7 +187,9 @@ void EnemyCharge::UpdateAttackState(float elapsedTime, Tower& tower)
 
 		if (dot > 0.95f&&canDamage == true)
 		{
-			Player::Instance().ApplyDamage(1,0.0f);
+			int damage = Player::Instance().GetNowRiskGauge() / 4;
+			if (damage < 1) damage = 1;
+			Player::Instance().ApplyDamage(damage, 0.0f);
 			attackInterval = 1.0f;
 			canDamage = false;
 		}

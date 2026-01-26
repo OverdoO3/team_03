@@ -33,6 +33,8 @@ public:
 
 	// GUI•`‰æ
 	void DrawGUI() override;
+
+	void POSE();
 private:
 	std::unique_ptr<Stage> stage = nullptr;
 	std::unique_ptr<Pathfinding> pathfinding = nullptr;
@@ -50,6 +52,9 @@ private:
 	std::unique_ptr<Sprite> resultSpr;
 
 	std::unique_ptr<Sprite> NumberSpr;
+
+	std::unique_ptr<Sprite> deadText;
+	std::unique_ptr<Sprite> deadCount;
 
 	XMFLOAT2 resultKillPos = { 650,340 };
 	XMFLOAT2 resultWavePos = { 650,600 };
@@ -76,4 +81,11 @@ private:
 			a.z + (b.z - a.z) * t
 		};
 	}
+
+	std::unique_ptr<Sprite> sprite = nullptr;
+	std::unique_ptr<Sprite> sprUI = nullptr;
+
+	bool pose;
+	int mousec = 0;
+
 };

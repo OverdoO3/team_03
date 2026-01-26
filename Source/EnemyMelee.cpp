@@ -17,7 +17,7 @@ EnemyMelee::EnemyMelee(Stage* map, Pathfinding* pf, std::shared_ptr<Model> mod, 
 
 	type = EnemyType::Melee;
 
-	health = 100;
+	health = 30;
 
 	PlayAnimation("walk", true);
 
@@ -61,6 +61,7 @@ void EnemyMelee::Update(float elapsedTime)
 		}
 		break;
 	}
+	position.y = 0.0f;
 
 	UpdateTransform();
 
@@ -137,7 +138,10 @@ void EnemyMelee::UpdateAttackState(float elapsedTime,Tower& tower)
 		targetPosition = Player::Instance().GetPosition();
 		if (attackInterval < 0.0f)
 		{
-			Player::Instance().ApplyDamage(1, 0.0f);
+			int a = Player::Instance().GetNowRiskGauge(); 
+			int damage = 1.0f * Player::Instance().GetNowRiskGauge() / 5.0f;
+			if (damage < 1) damage = 1;
+			Player::Instance().ApplyDamage(damage, 0.0f);
 			enemyWepon.SetIsAttack(true);
 			enemyWepon.SetPosition(position);
 			attackInterval = 1.0f;
@@ -169,7 +173,7 @@ void EnemyMelee::PlayHitEffect()
 
 void EnemyMelee::DrawDebugGUI()
 {
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	/*ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_Once);
 	ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_FirstUseEver);
 
@@ -177,7 +181,7 @@ void EnemyMelee::DrawDebugGUI()
 	{
 		ImGui::InputInt("EnemyHP", &health);
 		ImGui::End();
-	}
+	}*/
 }
 
 

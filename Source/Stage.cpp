@@ -11,7 +11,7 @@ Stage::Stage()
 
 	nexus = std::make_unique<Nexus>();
 
-	position = { 0.0f,-2.8f,0.0f};
+	position = { 0.0f,-1.4f,0.0f};
 	scale = { 0.02f,0.02f,0.02f };
 	angle = { 0,1.57f,0 };
 	UpdateTransfomEuler();
@@ -172,7 +172,7 @@ DirectX::XMFLOAT3 Stage::GridToWorld(int x, int z) const
 
 void Stage::DrawDebugGUI()
 {
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	/*ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 1000, pos.y + 200), ImGuiCond_Once);
 	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 
@@ -181,7 +181,7 @@ void Stage::DrawDebugGUI()
 		int a = nexus->GetHP();
 		ImGui::DragInt("HP", &a);
 	}
-	ImGui::End();
+	ImGui::End();*/
 }
 
 

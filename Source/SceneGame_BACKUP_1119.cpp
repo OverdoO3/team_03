@@ -5,6 +5,7 @@
 #include "EnemyManager.h"
 #include "Player.h"
 #include "EffectManager.h"
+<<<<<<< HEAD
 #include "nlohmann/json.hpp"
 #include "fstream"
 #include "SceneManager.h"
@@ -15,6 +16,11 @@
 #include "KeyInput.h"
 
 using json = nlohmann::json;
+=======
+#include "SceneManager.h"
+#include "SceneLoading.h"
+#include "SceneTitle.h"
+>>>>>>> origin/main
 // 初期化
 void SceneGame::Initialize()
 {
@@ -49,12 +55,10 @@ void SceneGame::Initialize()
 	blackSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
 	fadeSpr = std::make_unique<Sprite>("Data/Sprite/black.png");
 	resultSpr = std::make_unique<Sprite>("Data/Sprite/game_result_backgraund.png");
-	deadText = std::make_unique<Sprite>("Data/Sprite/dead_text.png");
-	deadCount = std::make_unique<Sprite>("Data/Sprite/count_down.png");
+
 	NumberSpr = std::make_unique<Sprite>("Data/Sprite/number_UI2.png");
 
 	explosion = std::make_unique<Effect>("Data/Effect/explosion/explosion.efk");
-
 
 	if (count > 0) return;
 
@@ -86,9 +90,14 @@ void SceneGame::Initialize()
 	}
 	count++;
 	Player::Instance().setStage(stage.get());
+<<<<<<< HEAD
+
+
+=======
 	sprite = std::make_unique<Sprite>("Data/Sprite/POSE.png");
 	sprUI = std::make_unique<Sprite>("Data/Sprite/POSE_UI.png");
 	pose = false;
+>>>>>>> origin/main
 }
 // 終了化
 void SceneGame::Finalize()
@@ -101,6 +110,7 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
+<<<<<<< HEAD
 	if (stage->GetNexus()->GetHP() <= 0)
 	{
 		isAlive = false;
@@ -153,6 +163,7 @@ void SceneGame::Update(float elapsedTime)
 		return;
 	}
 
+=======
 	GamePad& gamePad = Input::Instance().GetGamePad();
 	if (gamePad.GetButtonDown() & GamePad::BTN_X)
 	{
@@ -164,6 +175,7 @@ void SceneGame::Update(float elapsedTime)
 		return;
 	}
 	//DirectX::XMFLOAT3 target = player->GetPosition();]
+>>>>>>> origin/main
 	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
 	target.y += 0.5f;
 	cameraController->SetTarget(target);
@@ -212,13 +224,13 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
-		//Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
-		////エネミーデバッグプリミティブ
-		//EnemyManager::Instance().RenderDebugPrimitive(rc,shapeRenderer);
+		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
+		//エネミーデバッグプリミティブ
+		EnemyManager::Instance().RenderDebugPrimitive(rc,shapeRenderer);
 
-		//stage->DebugDrawGrid(rc, shapeRenderer,modelRenderer);
+		stage->DebugDrawGrid(rc, shapeRenderer,modelRenderer);
 
-		//WaveManager::Instance().RenderDebugPrimitive(rc, shapeRenderer);
+		WaveManager::Instance().RenderDebugPrimitive(rc, shapeRenderer);
 	}
 
 	// 2Dスプライト描画
@@ -240,12 +252,6 @@ void SceneGame::Render()
 				towerBreakSpr->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, resultTimer);
 			}
 		}
-		if (Player::Instance().GetIsDead())
-		{
-			deadText->Render(rc, 0, 0, 0, 1920, 1080, 0, 1, 1, 1, 1);
-			scoreRender::ScoreRenderDigit_NoHead_Spacing(rc, deadCount.get(), Player::Instance().GetRespawnTimer(), 100, 100, 1175, 620, 0, 0, 1, 1, 1);
-		}
-
 		Player::Instance().RenderUI(rc);
 		if (pose)
 		{
@@ -263,7 +269,7 @@ void SceneGame::Render()
 // GUI描画
 void SceneGame::DrawGUI()
 {
-	/*Player::Instance().DrawDebugGUI();
+	Player::Instance().DrawDebugGUI();
 	stage->DrawDebugGUI();
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 200), ImGuiCond_Once);
@@ -277,11 +283,13 @@ void SceneGame::DrawGUI()
 		ImGui::End();
 	}
 	
-	WaveManager::Instance().DebugGUI();*/
+	WaveManager::Instance().DebugGUI();
 }
 
 void SceneGame::POSE()
 {
+	
+
 	Mouse& mouse = Input::Instance().GetMouse();
 	mousec = 0;
 	if (mouse.GetOldPositionY() > 900 && mouse.GetOldPositionY() < 1000)

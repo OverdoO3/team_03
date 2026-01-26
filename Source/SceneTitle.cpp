@@ -6,7 +6,6 @@
 #include "SceneLoading.h"
 #include"SceneTutorial.h"
 
-
 #include "Player.h"
 
 void SceneTitle::Initialize()
@@ -16,12 +15,12 @@ void SceneTitle::Initialize()
 	sprUI = std::make_unique<Sprite>("Data/Sprite/title_UI.png");
 
 	Player::Instance().Initialize();
-	tower = std::make_unique<Tower>();
+	stage = std::make_unique<Stage>();
 
 	Graphics& graphics = Graphics::Instance();
 	Camera& camera = Camera::Instance();
 	camera.SetLookAt(
-		DirectX::XMFLOAT3(0, 10, -10),//視点
+		DirectX::XMFLOAT3(0, 20, 25),//視点
 		DirectX::XMFLOAT3(0, 0, 0),   //注視店
 		DirectX::XMFLOAT3(0, 1, 0)    //上方向
 	);
@@ -32,9 +31,6 @@ void SceneTitle::Initialize()
 		1000.0f//クリップ遠
 	);
 	cameraController = std::make_unique<CameraController>();
-
-	tower->SetPosition({ 10,10,10 });
-	Player::Instance().SetPosition({ 10,10,10 });
 }
 
 void SceneTitle::Finalize()
@@ -59,7 +55,7 @@ void SceneTitle::Update(float elapsedTime)
 	mousec = 0;
 	if (mouse.GetOldPositionX() > 730 && mouse.GetOldPositionX() < 1130)
 	{
-		if (mouse.GetOldPositionY() > 500 && mouse.GetOldPositionY() < 600)
+		if (mouse.GetOldPositionY() > 450 && mouse.GetOldPositionY() < 550)
 		{
 			mousec = 1;
 			if (GetAsyncKeyState(VK_LBUTTON))
@@ -67,11 +63,11 @@ void SceneTitle::Update(float elapsedTime)
 				SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
 			}
 		}
-		if (mouse.GetOldPositionY() > 650 && mouse.GetOldPositionY() < 750)
+		if (mouse.GetOldPositionY() > 600 && mouse.GetOldPositionY() < 700)
 		{
 			mousec = 2;
 		}
-		if (mouse.GetOldPositionY() > 800 && mouse.GetOldPositionY() < 900)
+		if (mouse.GetOldPositionY() > 750 && mouse.GetOldPositionY() < 850)
 		{
 			mousec = 4;
 			if (GetAsyncKeyState(VK_LBUTTON))
@@ -79,8 +75,30 @@ void SceneTitle::Update(float elapsedTime)
 				SceneManager::Instance().ChangeScene(new SceneTutorial);
 			}
 		}
+		if (mouse.GetOldPositionY() > 900 && mouse.GetOldPositionY() < 1000)
+		{
+			mousec = 8;
+			if (GetAsyncKeyState(VK_LBUTTON))
+			{
+				PostQuitMessage(0);
+			}
+		}
 	}
-	tower->Update(elapsedTime);
+
+		Camera::Instance().SetLookAt(
+		camera_eye,//視点
+		camera_target,   //注視店
+		DirectX::XMFLOAT3(0, 1, 0)    //上方向
+	);
+
+	Player::Instance().setScale(sca);
+	Player::Instance().SetPosition(pos);
+	Player::Instance().SetAngle(ang);
+	Player::Instance().UpdateTransform();
+	Player::Instance().GetDirObj()->SetPosition({100,100,100});
+	Player::Instance().GetDirObj()->UpdateTransfomEuler();
+
+	stage->Update(elapsedTime);
 }
 
 void SceneTitle::Render()
@@ -106,8 +124,10 @@ void SceneTitle::Render()
 	DirectX::XMStoreFloat4x4(&vp, VP);
 	
 	{
-		//tower->Render(rc, modelRenderer);
+		Player::Instance().GetDirObj()->SetPosition({ 100,100,100 });
 		Player::Instance().Render(rc, modelRenderer);
+
+		stage->Render(rc, modelRenderer);
 	}
 
 	//2Dスプライト描画
@@ -118,13 +138,24 @@ void SceneTitle::Render()
 			530, 100, 0, 800, 300,
 			0,
 			1, 1, 1, 1);
-		sprUI->Render(rc, 730, 500, 0, 400, 100, 800-800 * (mousec % 2), 0, 800, 200, 0, 1, 1, 1, 1);
-		sprUI->Render(rc, 730, 650, 0, 400, 100, 800-800 * ( mousec%4/2), 200, 800, 200, 0, 1, 1, 1, 1);
-		sprUI->Render(rc, 730, 800, 0, 400, 100, 800-800 * ( mousec/4), 400, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 450, 0, 400, 100, 800-800 * (mousec % 2), 0, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 600, 0, 400, 100, 800-800 * ( mousec/2%2), 200, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 750, 0, 400, 100, 800-800 * ( mousec/4%2), 400, 800, 200, 0, 1, 1, 1, 1);
+		sprUI->Render(rc, 730, 900, 0, 400, 100, 800-800 * ( mousec/8),  600, 800, 200, 0, 1, 1, 1, 1);
 
 	}
 }
 
 void SceneTitle::DrawGUI()
 {
+	/*if(ImGui::Begin("tran",nullptr,ImGuiBackendFlags_None))
+	{
+		ImGui::DragFloat3("pos", &pos.x);
+		ImGui::DragFloat3("ang", &ang.x);
+		ImGui::DragFloat3("sca", &sca.x);
+
+		ImGui::DragFloat3("camerapos", &camera_eye.x);
+		ImGui::DragFloat3("cameratarget", &camera_target.x);
+	}
+	ImGui::End();*/
 }

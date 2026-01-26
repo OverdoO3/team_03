@@ -47,6 +47,7 @@ public:
 
 	void InputRush(float elapsedTime, const int(&maps)[WIDTH][HEIGHT]);
 	void InputCharge(float elapsedTime);
+	void InputChain(float elapsedTime);
 
 	void setStage(Stage* s) { stage = s; }
 
@@ -58,7 +59,18 @@ public:
 
 	float GetHitStopTimer() {return hitStopTimer;}
 
+	Dir* GetDirObj() { return dirModel.get(); }
+
+	bool GetIsDead() { return isDead; }
+
+	float GetRespawnTimer() { return respawnTimer;}
+
+	float GetNowRiskGauge() { return riskGauge[(int)nowWepon]; }
 private:
+	bool isDead = false;
+	float respawnTimer = 0;
+
+	float tim;
 	//スティック入力値から移動ベクトルを取得
 	DirectX::XMFLOAT3 GetMoveVec() const;
 	float moveSpeed = 5.0f;
@@ -73,6 +85,9 @@ private:
 
 	std::unique_ptr<Effect> SpearDash = nullptr;
 	Effekseer::Handle SpearDashHandle = -1;
+
+	std::unique_ptr<Effect> SwordSlash = nullptr;
+	Effekseer::Handle SwordSlashHandle = -1;
 
 	std::unique_ptr<Plane>plane = nullptr;
 
@@ -95,6 +110,8 @@ private:
 	std::unique_ptr<Sprite> sprnumber = nullptr;
 
 	Stage* stage;
+
+	float attackTimer = 0.0f;
 
 	float avoidTimer = 0.0f;
 	DirectX::XMFLOAT3 avoidVec = { 0,0,0 };

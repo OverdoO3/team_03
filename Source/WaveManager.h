@@ -48,7 +48,7 @@ private:
 
 	std::vector<std::unique_ptr<SpawnPoint>> points;
 
-    int currentWave = 0;
+    int currentWave = 1;
 
 	int finishCounts = 0;
 

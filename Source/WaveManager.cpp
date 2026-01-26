@@ -3,7 +3,7 @@
 void WaveManager::Initialize()
 {
 	timer = 0;
-	currentWave = 0;
+	currentWave = 1;
 	finishCounts = 0;
 	state = WaveState::Waiting;
 	timer = 0.0f;
@@ -29,8 +29,8 @@ void WaveManager::Update(float elapsedTime,Stage* stage,Pathfinding* path)
 		timer += elapsedTime;
 		for (auto& po : points)
 		{
-			po->Update(elapsedTime,stage,path);
-			if (po->isFinish())
+			po->Update(elapsedTime,stage,path,currentWave);
+			if (po->isFinish(currentWave))
 			{
 				timer = 0;
 				state = WaveState::InWave;

@@ -20,11 +20,11 @@ public:
 	SpawnPoint(SpawnInfo in);
 	~SpawnPoint() override;
 
-	void Update(float elapsedTime,Stage* stage, Pathfinding* path);
+	void Update(float elapsedTime,Stage* stage, Pathfinding* path,int waveCount);
 
 	void SpawnEnemy(Stage* stage, Pathfinding* path);
 
-	bool isFinish();
+	bool isFinish(int waveCount);
 
 	void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer) override;
 

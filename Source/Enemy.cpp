@@ -22,7 +22,7 @@ void Enemy::UpdateEnemy(float dt,Tower* tower)
 	XMFLOAT3 targetPos{};
 	if (type == EnemyType::Melee)
 	{
-		if (meleeAttackSearchRange > dist1)
+		if (meleeAttackSearchRange > dist1 && Player::Instance().GetHP() >= 0)
 		{
 			targetPos = Player::Instance().GetPosition();
 			target = true;
@@ -35,7 +35,7 @@ void Enemy::UpdateEnemy(float dt,Tower* tower)
 	}
 	else if (type == EnemyType::Ranged)
 	{
-		if (rangedAttackSearchRange > dist1)
+		if (rangedAttackSearchRange > dist1 && Player::Instance().GetHP() >= 0)
 		{
 			targetPos = Player::Instance().GetPosition();
 			target = true;

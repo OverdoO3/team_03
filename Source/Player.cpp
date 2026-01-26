@@ -25,6 +25,8 @@ void Player::Initialize()
 	WeponTrailEffect= std::make_unique<Effect>("Data/Effect/wepon.efk");
 	riskAura = std::make_unique<Effect>("Data/Effect/risk_aura/risk_aura.efk");
 	SpearDash = std::make_unique<Effect>("Data/Effect/spear_dash/spear_dash.efk");
+	SwordSlash = std::make_unique<Effect>("Data/Effect/sword_slash/sword_slash.efk");
+
 	hitSE.reset(Audio::Instance().LoadAudioSource("Data/Sound/Hit.wav"));
 
 	dirModel = std::make_unique<Dir>();
@@ -35,9 +37,10 @@ void Player::Initialize()
 
 	weponCol = std::make_unique<Wepon>();
 
-	position = { 5,3,3 };
+	position = { 5,0,3 };
 
 	health = 100;
+	attackTimer = 0.0f;
 
 	state = State::Idle;
 	PlayAnimation("idle", true);
@@ -48,6 +51,7 @@ void Player::Initialize()
 	sprwepon = std::make_unique<Sprite>("Data/Sprite/wepon_UI.png");
 	sprnumber = std::make_unique<Sprite>("Data/Sprite/number_UI.png");
 
+	isDead = false;
 }
 
 void Player::Finalize()
@@ -61,212 +65,263 @@ void Player::Update(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 		hitStopTimer -= elapsedTime;
 		return;
 	}
-	UpdateVelocity(elapsedTime);
 
-	CollisionPlyerVsEnemies();
-
-	dirModel->Update(position);
-	//InputMove(elapsedTime);
-
-	riskAura->SetPosition(riskAuraHandle, position);
-
-	UpdateWeponCollisionFromMotion();
-
-	if (riskGauge[(int)nowWepon] > 75)
+	if (health <= 0&&isDead == false)
 	{
-		if (riskAuraHandle < 0)riskAuraHandle = riskAura->Play(position);
+		respawnTimer = 5.0f;
+		riskGauge[0] = 0;
+		riskGauge[1] = 0;
+		riskGauge[2] = 0;
+		isDead = true;
+	}
+	if (respawnTimer <= 0.0f&&isDead == true)
+	{
+		health = 100;
+		isDead = false;
 	}
 	else
 	{
-		riskAura->Stop(riskAuraHandle);
-		riskAuraHandle = -1;
+		respawnTimer -= elapsedTime;
 	}
 
-	ChangeWepon();
-
-	switch (state)
+	if (health <= 0)
 	{
-	case State::Idle:
-	{
-			switch (nowWepon)
-			{
-			case HaveWepon::Axe:
-				InputCharge(elapsedTime);
-				break;
-			case HaveWepon::Spere:
-				InputRush(elapsedTime, maps);
-				break;
-			case HaveWepon::Sword:
-				break;
-			default:
-				break;
-			}
-
-		if (!isChargeRush)
-		{
-			if (InputMove(elapsedTime, maps))
-			{
-				state = State::Run;
-				PlayAnimation("walk", true);
-			}
-		}
-
-		InputAvoid();
-		InputAttack();
-		break;
-	}
-	case State::Run:
-	{
-		if (!InputMove(elapsedTime, maps))
-		{
-			state = State::Idle;
-			PlayAnimation("idle", true);
-		}
-
-		{
-			switch (nowWepon)
-			{
-			case HaveWepon::Axe:
-				InputCharge(elapsedTime);
-				break;
-			case HaveWepon::Spere:
-				InputRush(elapsedTime, maps);
-				break;
-			case HaveWepon::Sword:
-				break;
-			default:
-				break;
-			}
-		}
-		InputAvoid();
-		InputAttack();
-		moveSpeed = 5.0f;
-		break;
+		health = 0;
 	}
 
-	case State::Avoid:
+	if (!isDead)
 	{
-		avoidTimer -= elapsedTime;
-		MoveWithCollision(elapsedTime, avoidVec.x, avoidVec.z, maps, 5.0f);
-		weponCol->SetIsAttack(false);
-		if (avoidTimer <= 0.0f)
-		{
-			velocity.x = 0;
-			velocity.z = 0;
-			chargeValue = 1.0f;
-			chargeTime = 0.0f;
-			chargestil = 1.0f;
+		//UpdateVelocity(elapsedTime);
 
-			rushDist = 0.0f;
-			isChargeRush = false;
-			state = State::Idle;
-			PlayAnimation("idle", true);
-		}
-		break;
-	}
+		CollisionPlyerVsEnemies();
 
-	case State::Attack:
-	{
-		if (animationPlaying)
+		dirModel->Update(position);
+
+
+		riskAura->SetPosition(riskAuraHandle, position);
+
+		UpdateWeponCollisionFromMotion();
+
+		if (riskGauge[(int)nowWepon] > 75)
 		{
-			weponCol->SetTimer(0.2f);
-			weponCol->SetIsAttack(true);
+			if (riskAuraHandle < 0)riskAuraHandle = riskAura->Play(position);
 		}
 		else
 		{
-			weponCol->SetIsAttack(false);
-			state = State::Idle;
-			PlayAnimation("idle", true);
+			riskAura->Stop(riskAuraHandle);
+			riskAuraHandle = -1;
+		}
+
+		tim += elapsedTime;
+
+		if (tim > 1)
+		{
+			if (nowWepon == HaveWepon::Sword)
+			{
+				riskGauge[1] -= elapsedTime;
+				riskGauge[2] -= elapsedTime;
+			}
+			if (nowWepon == HaveWepon::Axe)
+			{
+				riskGauge[0] -= elapsedTime;
+				riskGauge[2] -= elapsedTime;
+			}
+			if (nowWepon == HaveWepon::Spere)
+			{
+				riskGauge[0] -= elapsedTime;
+				riskGauge[1] -= elapsedTime;
+			}
+			tim = 0;
+		}
+
+		ChangeWepon();
+
+		switch (state)
+		{
+		case State::Idle:
+		{
+			switch (nowWepon)
+			{
+			case HaveWepon::Axe:
+				InputCharge(elapsedTime);
+				break;
+			case HaveWepon::Spere:
+				InputRush(elapsedTime, maps);
+				break;
+			case HaveWepon::Sword:
+				InputChain(elapsedTime);
+				break;
+			default:
+				break;
+			}
+
+			if (!isChargeRush)
+			{
+				if (InputMove(elapsedTime, maps))
+				{
+					state = State::Run;
+					PlayAnimation("walk", true);
+				}
+			}
+
+			InputAvoid();
+			InputAttack();
+			break;
+		}
+		case State::Run:
+		{
+			if (!InputMove(elapsedTime, maps))
+			{
+				state = State::Idle;
+				PlayAnimation("idle", true);
+			}
+
+			{
+				switch (nowWepon)
+				{
+				case HaveWepon::Axe:
+					InputCharge(elapsedTime);
+					break;
+				case HaveWepon::Spere:
+					InputRush(elapsedTime, maps);
+					break;
+				case HaveWepon::Sword:
+					InputChain(elapsedTime);
+					break;
+				default:
+					break;
+				}
+			}
+			InputAvoid();
+			InputAttack();
+			moveSpeed = 5.0f;
 			break;
 		}
 
-		/*if (InputMove(elapsedTime, maps))
+		case State::Avoid:
 		{
-			state = State::Run;
+			avoidTimer -= elapsedTime;
+			MoveWithCollision(elapsedTime, avoidVec.x, avoidVec.z, maps, 5.0f);
 			weponCol->SetIsAttack(false);
-			PlayAnimation("walk", true);
+			if (avoidTimer <= 0.0f)
+			{
+				velocity.x = 0;
+				velocity.z = 0;
+				chargeValue = 1.0f;
+				chargeTime = 0.0f;
+				chargestil = 1.0f;
+
+				rushDist = 0.0f;
+				isChargeRush = false;
+				state = State::Idle;
+				PlayAnimation("idle", true);
+			}
 			break;
 		}
-		*/
-		InputAttack();
-		InputRush(elapsedTime, maps);
-		
-		moveSpeed = 2.0f;
-		break;
-	}
 
-	case State::Rush:
-	{
-		//突進
-		float dx = rushVec.x * rushSpeed * rushDist * elapsedTime;
-		float dz = rushVec.z * rushSpeed * rushDist * elapsedTime;
-
-		MoveWithCollision(elapsedTime, dx, dz, maps, 10.0f);
-
-		rushTimer -= elapsedTime;
-		SpearDash->SetPosition(SpearDashHandle, position);
-		weponCol->SetRadius(1.0f);
-
-		if (rushTimer <= 0.0f)
+		case State::Attack:
 		{
-			state = State::Idle;
-			PlayAnimation("idle", true);
+			attackTimer += elapsedTime;
+			if (animationPlaying)
+			{
+				if (attackTimer > 0.2f)
+				{
+					attackTimer = 0.0f;
+					weponCol->SetTimer(0.2f);
+					weponCol->SetIsAttack(true);
+				}
+			}
+			else
+			{
+				weponCol->SetIsAttack(false);
+				state = State::Idle;
+				PlayAnimation("idle", true);
+				break;
+			}
+			InputAvoid();
+			InputAttack();
+			InputRush(elapsedTime, maps);
 
-			rushDist = 0.0f;
+			moveSpeed = 2.0f;
+			break;
 		}
-		break;
-	}
-	case State::Charge:
-	{
-		InputCharge(elapsedTime);
-		InputAvoid();
-		chargestil -= elapsedTime;
-		if (chargestil <= 0.0f)
+
+		case State::Rush:
 		{
-			chargeValue = 1.0f;
-			chargeTime = 0.0f;
-			chargestil = 1.0f;
+			//突進
+			float dx = rushVec.x * rushSpeed * rushDist * elapsedTime;
+			float dz = rushVec.z * rushSpeed * rushDist * elapsedTime;
+
+			MoveWithCollision(elapsedTime, dx, dz, maps, 10.0f);
+
+			rushTimer -= elapsedTime;
+			SpearDash->SetPosition(SpearDashHandle, position);
 			weponCol->SetRadius(1.0f);
-			state = State::Idle;
-			PlayAnimation("idle", true);
+
+			if (rushTimer <= 0.0f)
+			{
+				state = State::Idle;
+				PlayAnimation("idle", true);
+
+				rushDist = 0.0f;
+			}
+			break;
 		}
+		case State::Charge:
+		{
+			InputCharge(elapsedTime);
+			InputAvoid();
+			chargestil -= elapsedTime;
+			if (chargestil <= 0.0f)
+			{
+				chargeValue = 1.0f;
+				chargeTime = 0.0f;
+				chargestil = 1.0f;
+				weponCol->SetRadius(1.0f);
+				state = State::Idle;
+				PlayAnimation("idle", true);
+			}
+		}
+		}
+		weponCol->Update(elapsedTime);
+		plane->SetType((int)nowWepon);
+		switch (nowWepon)
+		{
+		case Player::HaveWepon::Sword:
+			break;
+		case Player::HaveWepon::Axe:
+			plane->Update(elapsedTime, position, chargeTime, angle.y);
+			break;
+		case Player::HaveWepon::Spere:
+			plane->Update(elapsedTime, position, rushDist, angle.y);
+			break;
+		default:
+			break;
+		}
+		// トランスフォーム更
+		model->UpdateTransform();
+
+		CollisionWeponVsEnemies();
+
+		UpdateTransform();
+
+		UpdateAnimation(elapsedTime);
+
+		invincibleTime -= elapsedTime;
+
+		prevState = state;
 	}
-	}
-
-	weponCol->Update(elapsedTime);
-	plane->SetType((int)nowWepon);
-	switch (nowWepon)
-	{
-	case Player::HaveWepon::Sword:
-		break;
-	case Player::HaveWepon::Axe:
-		plane->Update(elapsedTime, position, chargeTime, angle.y);
-		break;
-	case Player::HaveWepon::Spere:
-		plane->Update(elapsedTime, position, rushDist, angle.y);
-		break;
-	default:
-		break;
-	}
-	// トランスフォーム更
-	model->UpdateTransform();
-
-	CollisionWeponVsEnemies();
-
-	UpdateTransform();
-
-	UpdateAnimation(elapsedTime);
-
-	invincibleTime -= elapsedTime;
-
-	prevState = state;
 }
 
 void Player::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
-	renderer->Render(rc, transform, model.get(), ShaderId::Lambert);;
-	dirModel->Render(rc, renderer);
-	plane->Render(rc, renderer);
+	if (!isDead)
+	{
+		renderer->Render(rc, transform, model.get(), ShaderId::Lambert);;
+		dirModel->Render(rc, renderer);
+		plane->Render(rc, renderer);
+	}
+	
 }
 
 void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
@@ -421,7 +476,6 @@ void Player::InputRush(float elapsedTime, const int(&maps)[WIDTH][HEIGHT])
 void Player::InputCharge(float elapsedTime)
 {
 	//右クリック押している間向きをカーソルの方向にするやーつ
-
 	DirectX::XMFLOAT3 vec{};
 	if (KeyInput::Instance().GetKeyHold(VK_RBUTTON))
 	{
@@ -495,6 +549,87 @@ void Player::InputCharge(float elapsedTime)
 		weponCol->SetIsCharge(false);
 		weponCol->SetIsAttack(true);
 		weponCol->SetTimer(0.2f);
+		PlayAnimation("chargeattack", false);
+	}
+}
+
+void Player::InputChain(float elapsedTime)
+{
+	//右クリック押している間向きをカーソルの方向にするやーつ
+	DirectX::XMFLOAT3 vec{};
+	if (KeyInput::Instance().GetKeyHold(VK_RBUTTON))
+	{
+		state = State::Charge;
+		PlayAnimation("charge", false);
+		DirectX::XMFLOAT3 curPosS = Screen::GetScreenCursorWorld(&Camera::Instance(), 0);
+		DirectX::XMFLOAT3 curPosE = Screen::GetScreenCursorWorld(&Camera::Instance(), 1.0f);
+
+		DirectX::XMFLOAT3 hitPosition;
+		DirectX::XMFLOAT3 hitNormal;
+
+		if (Hit::RayCast(curPosS, curPosE,
+			stage->GetTransform(),
+			stage->getModel(),
+			hitPosition, hitNormal))
+		{
+			vec = {
+				hitPosition.x - position.x,
+				0.0f,
+				hitPosition.z - position.z
+			};
+
+			// 正規化
+			float len = sqrtf(vec.x * vec.x + vec.z * vec.z);
+			if (len != 0.0f)
+			{
+				vec.x /= len;
+				vec.z /= len;
+			}
+
+			rushVec = vec;
+
+			// 回転
+			float angles = atan2f(vec.x, vec.z);
+
+			angle.y = angles;
+
+			chargeTime += elapsedTime;
+		}
+		chargestil = 0.5f;
+		weponCol->SetIsCharge(true);
+		weponCol->SetRadius(chargeTime * 1.0f);
+		weponCol->SetAngle(angle);
+	}
+
+	// 離した瞬間開放
+	if (KeyInput::Instance().GetKeyUp(VK_RBUTTON))
+	{
+		if (chargeTime > 2.5f)
+		{
+			chargeValue = 9.0f;
+		}
+		else if (chargeTime > 1.8f)
+		{
+			chargeValue = 6.0f;
+		}
+		else if (chargeTime > 1.0f)
+		{
+			chargeValue = 3.5f;
+		}
+		else if (chargeTime > 0.5f)
+		{
+			chargeValue = 2.0f;
+		}
+		else
+		{
+			chargeValue = 1.0f;
+		}
+
+		chargestil = 0.5f;
+		weponCol->SetIsCharge(false);
+		weponCol->SetIsAttack(true);
+		weponCol->SetPosition(position);
+		weponCol->SetTimer(0.2f * chargeValue);
 		PlayAnimation("chargeattack", false);
 	}
 }
@@ -623,7 +758,7 @@ void Player::UpdateWeponCollisionFromMotion()
 	default:
 		break;
 	}
-	WeponTipPos.y = 3.0f;
+	WeponTipPos.y = 1.0f;
 }
 
 bool Player::InputMove(float elapsedTime,const int(&maps)[WIDTH][HEIGHT])
@@ -744,7 +879,7 @@ void Player::CollisionWeponVsEnemies()
 
 			DamegeDrawManager::Instance().makeTexts(damage, screenPosition, 0.4f, { 1,1,1,1 }, 0.4f);
 
-			enemy->ApplyDamage(damage, 0.0f);
+			enemy->ApplyDamage(damage, 2.0f);
 			enemy->PlayHitEffect();
 
 			int riskAdd = 0;
@@ -814,7 +949,7 @@ void Player::CollisionPlyerVsEnemies()
 
 void Player::DrawDebugGUI()
 {
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	/*ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_Once);
 	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 
@@ -838,5 +973,5 @@ void Player::DrawDebugGUI()
 		ImGui::DragFloat3("WeponTipPos", &WeponTipPos.x);
 
 		ImGui::End();
-	}
+	}*/
 }
